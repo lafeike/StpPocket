@@ -6,6 +6,65 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.stpub.stppocket.PublicationActivity">
-    <include layout="@layout/app_bar" />
+    <include layout="@layout/app_bar"
+        android:layout_height="0dp"
+        android:layout_width="0dp"
+        tools:layout_editor_absoluteY="0dp"
+        tools:layout_editor_absoluteX="0dp" />
+
+    <EditText
+        android:id="@+id/lblTitle"
+        style="@android:style/Widget.DeviceDefault.AutoCompleteTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="56dp"
+        android:editable="false"
+        android:ems="10"
+        android:enabled="false"
+        android:inputType="none"
+        android:singleLine="true"
+        android:text="@string/publication_title"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        android:textColor="@android:color/white"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:background="@android:color/background_dark"
+        tools:clickable="false" />
+
+    <TableLayout
+        android:id="@+id/tblContent"
+        android:layout_width="395dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="10dp"
+        tools:layout_editor_absoluteX="8dp"
+        tools:layout_editor_absoluteY="8dp">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#607D8B"
+            android:padding="5dp" />
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </TableLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:layout_editor_absoluteX="9dp"
+        tools:layout_editor_absoluteY="7dp" />
 
 </android.support.constraint.ConstraintLayout>

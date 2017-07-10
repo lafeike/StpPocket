@@ -6,11 +6,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.stpub.stppocket.PublicationActivity">
-    <include layout="@layout/app_bar"
-        android:layout_height="0dp"
+
+    <include
+        android:id="@+id/my_toolbar"
+        layout="@layout/app_bar"
         android:layout_width="0dp"
-        tools:layout_editor_absoluteY="0dp"
-        tools:layout_editor_absoluteX="0dp" />
+        android:layout_height="0dp"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp" />
 
     <EditText
         android:id="@+id/lblTitle"

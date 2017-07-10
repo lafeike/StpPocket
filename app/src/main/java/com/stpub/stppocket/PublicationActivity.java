@@ -23,18 +23,19 @@ public class PublicationActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_publication);
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_publication);
 
 
         Intent intent = getIntent();
         String message = intent.getStringExtra(MainActivity.EXTRA_MESSAGE);
+        Log.i("INFO", "UserId: " + message);
 
         if (message.length() != 0){
-            myToolbar.setTitle(message);
+            //myToolbar.setTitle(message);
             setSupportActionBar(myToolbar);
             CallWebApi myTask = new CallWebApi();
             myTask.execute(message);
@@ -46,7 +47,7 @@ public class PublicationActivity extends AppCompatActivity {
         private  Exception exception;
 
         protected void onPreExecute() {
-            progressBar.setVisibility(View.VISIBLE);
+            //progressBar.setVisibility(View.VISIBLE);
         }
 
         protected String doInBackground(String... args){
@@ -83,7 +84,7 @@ public class PublicationActivity extends AppCompatActivity {
             if(response == null) {
                 response = "There was an error.";
             }
-            progressBar.setVisibility(View.GONE);
+            //progressBar.setVisibility(View.GONE);
             Log.i("INFO", response);
         }
 

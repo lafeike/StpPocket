@@ -7,13 +7,17 @@
     android:layout_height="match_parent"
     tools:context="com.stpub.stppocket.PublicationActivity">
 
-    <include
+    <android.support.v7.widget.Toolbar
         android:id="@+id/my_toolbar"
         layout="@layout/app_bar"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp" />
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+        tools:layout_editor_absoluteY="0dp"
+        tools:layout_editor_absoluteX="8dp" />
 
     <EditText
         android:id="@+id/lblTitle"
@@ -35,39 +39,22 @@
         tools:background="@android:color/background_dark"
         tools:clickable="false" />
 
-    <TableLayout
-        android:id="@+id/tblContent"
-        android:layout_width="395dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="10dp"
+    <com.stpub.stppocket.SortablePublicationTableView
+        xmlns:table="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/tableView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        table:tableView_columnCount="1"
+        tools:layout_editor_absoluteY="8dp"
         tools:layout_editor_absoluteX="8dp"
-        tools:layout_editor_absoluteY="8dp">
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#607D8B"
-            android:padding="5dp" />
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    </TableLayout>
+        />
 
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        tools:layout_editor_absoluteX="9dp"
-        tools:layout_editor_absoluteY="7dp" />
+        tools:layout_editor_absoluteX="181dp"
+        tools:layout_editor_absoluteY="171dp" />
 
 </android.support.constraint.ConstraintLayout>

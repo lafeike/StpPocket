@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.ThemedSpinnerAdapter;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
@@ -43,6 +44,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import com.stpub.stppocket.helper.Helper;
+
 import static android.R.attr.handle;
 
 
@@ -55,7 +58,7 @@ public class MainActivity extends AppCompatActivity implements
     ProgressBar progressBar;
     Button btnLogin, btnBrowseLocal;
 
-    public static final String EXTRA_MESSAGE ="hii";
+    public static final String EXTRA_MESSAGE = null;
 
     private GoogleApiClient mGoogleApiClient;
     private boolean mIsResolving = false;

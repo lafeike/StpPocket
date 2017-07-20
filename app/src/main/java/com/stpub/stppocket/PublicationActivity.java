@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import com.stpub.stppocket.data.DataFactory;
 import com.stpub.stppocket.data.Publication;
+import com.stpub.stppocket.helper.Helper;
 
 import org.json.JSONException;
 
@@ -34,12 +35,14 @@ import de.codecrafters.tableview.listeners.TableDataLongClickListener;
 import static com.stpub.stppocket.R.id.progressBar;
 
 public class PublicationActivity extends AppCompatActivity {
-    TableLayout tableLayout;
     ProgressBar progressBar;
+    public static final String EXTRA_MESSAGE = "EXTRA_MESSAGE";
+    public static final String TABLE_HEADER = "TABLE_HEADER"; // Publication title selected will show on the table header of Topic.
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
+        Log.i("DEBUG", "PublicationActivity started.");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_publication);
 
@@ -47,14 +50,14 @@ public class PublicationActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
-
         Intent intent = getIntent();
         String message = intent.getStringExtra(MainActivity.EXTRA_MESSAGE);
-        Log.i("INFO", "UserId: " + message);
+
+        ((Helper) this.getApplication()).setUserId(String.valueOf(message));
 
         if (message.length() != 0){
-            myToolbar.setTitle(message);
-            setSupportActionBar(myToolbar);
+            //myToolbar.setTitle(message);
+            //setSupportActionBar(myToolbar);
             CallWebApi myTask = new CallWebApi();
             myTask.execute(message);
         }
@@ -72,8 +75,7 @@ public class PublicationActivity extends AppCompatActivity {
 
         @Override
         public void onDataClicked(final int rowIndex, final Publication clickedData){
-            final String acronym = "click:" + clickedData.getAcronym();
-            Toast.makeText(PublicationActivity.this, acronym, Toast.LENGTH_SHORT).show();
+            showTopic(clickedData.getAcronym(), clickedData.getTitle());
         }
     }
 
@@ -87,6 +89,15 @@ public class PublicationActivity extends AppCompatActivity {
             return true;
         }
     }
+
+
+    private void showTopic(String acronym, String title){
+        Intent intent = new Intent(this, TopicActivity.class);
+        intent.putExtra(EXTRA_MESSAGE, acronym);
+        intent.putExtra("TABLE_HEADER", title);
+        startActivity(intent);
+    }
+
 
     class CallWebApi extends AsyncTask<String, String, String> {
 
@@ -137,7 +148,7 @@ public class PublicationActivity extends AppCompatActivity {
     }
 
     private void buildTable(String jsonData){
-        final SortablePublicationTableView publicationTableView = (SortablePublicationTableView) findViewById(R.id.tableView);
+        final StpTableView publicationTableView = (StpTableView) findViewById(R.id.tableView);
         publicationTableView.addDataClickListener(new PublicationClickListener());
         publicationTableView.addDataLongClickListener(new PublicationLongclickListener());
 

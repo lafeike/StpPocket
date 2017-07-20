@@ -5,4 +5,13 @@
     <string name="login_slogan">The STP Pocket Reference puts your EH&amp;S content at your finger tips.</string>
     <string name="URL_END_POINT">http://10.1.48.195:9001/api/</string>
     <string name="publication_title">Select a publication below</string>
+    <string name="publication_toolbar">POCKET REFERENCE</string>
+    <string name="topic_toolbar">Topic</string>
+    <string name="rulebook_toolbar">Rulebook</string>
+    <string name="section_toolbar">Section</string>
+    <string name="paragraph_toolbar">Paragraph</string>
+    <string name="title_activity_topic">TopicActivity</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_rulebook">RulebookActivity</string>
+    <string name="title_activity_section">SectionActivity</string>
 </resources>

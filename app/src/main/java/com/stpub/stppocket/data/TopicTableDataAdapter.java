@@ -1,11 +1,9 @@
-package com.stpub.stppocket;
+package com.stpub.stppocket.data;
 
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
-import com.stpub.stppocket.data.Publication;
 
 import java.util.List;
 
@@ -13,25 +11,24 @@ import de.codecrafters.tableview.TableView;
 import de.codecrafters.tableview.toolkit.LongPressAwareTableDataAdapter;
 
 /**
- * Created by i-worx on 2017-07-11.
+ * Created by i-worx on 2017-07-17.
  */
 
-public class PublicationTableDataAdapter extends LongPressAwareTableDataAdapter<Publication> {
-
+public class TopicTableDataAdapter extends LongPressAwareTableDataAdapter<Topic> {
     private static final int TEXT_SIZE = 14;
 
 
-    public PublicationTableDataAdapter(final Context context, final List<Publication> data, final TableView<Publication> tableView){
+    public TopicTableDataAdapter(final Context context, final List<Topic> data, final TableView<Topic> tableView){
         super(context, data, tableView);
     }
 
 
     @Override
     public View getDefaultCellView(int rowIndex, int columnIndex, ViewGroup parentView){
-        final  Publication publication = getRowData(rowIndex);
+        final  Topic topic = getRowData(rowIndex);
         View renderedView = null;
 
-        renderedView = renderString(publication.getAcronym() + ": " + publication.getTitle());
+        renderedView = renderString(topic.getTopic());
 
         return renderedView;
     }
@@ -39,12 +36,12 @@ public class PublicationTableDataAdapter extends LongPressAwareTableDataAdapter<
 
     @Override
     public View getLongPressCellView(int rowIndex, int columnIndex, ViewGroup parentView){
-        final Publication pubs = getRowData(rowIndex);
+        final Topic topics = getRowData(rowIndex);
         View renderedView = null;
 
         switch (columnIndex){
             case 0:
-                renderedView = renderAcronym(pubs);
+                renderedView = renderTopic(topics);
                 break;
             default:
                 renderedView = getDefaultCellView(rowIndex, columnIndex, parentView);
@@ -54,14 +51,11 @@ public class PublicationTableDataAdapter extends LongPressAwareTableDataAdapter<
     }
 
 
-    private View renderAcronym(final Publication publication){
-        return renderString(publication.getAcronym());
+    private View renderTopic(final Topic topic){
+        return renderString(topic.getTopic());
     }
 
 
-    private View renderTitle(final Publication publication){
-        return renderString(publication.getTitle());
-    }
 
 
     private View renderString(final String value){

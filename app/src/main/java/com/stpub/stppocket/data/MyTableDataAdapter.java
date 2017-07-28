@@ -56,7 +56,7 @@ public class MyTableDataAdapter extends LongPressAwareTableDataAdapter<TableData
     }
 
 
-    private View renderString(final String value){
+    public View renderString(final String value){
         final TextView textView = new TextView(getContext());
         textView.setText(value);
         textView.setPadding(20, 10, 20, 10);

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.stpub.stppocket.ParagraphActivity;
 import com.stpub.stppocket.PublicationActivity;
 import com.stpub.stppocket.PublicationTableDataAdapter;
 import com.stpub.stppocket.R;
@@ -102,6 +103,12 @@ public class WebProxy extends AsyncTask<String, String, String> {
             case "rulebook":
                 result = "Rulebook?topicKey=" + value1;
                 break;
+            case "section":
+                result = "Section?rbKey=" + value1;
+                break;
+            case "paragraph":
+                result = "Para?SectionKey=" + value1;
+                break;
             default:
                 break;
         }
@@ -115,14 +122,29 @@ public class WebProxy extends AsyncTask<String, String, String> {
         public void onDataClicked(final int rowIndex, final TableData clickedData){
             Activity activity = (Activity) context;
             String activityName = activity.getClass().getName();
-            Intent intent = getLinkedIntent(activityName);
-            Log.i(TAG, "current activity: " + activityName);
-            Log.i(TAG, "Listener will arouse: " + intent.getComponent().getClassName());
-            Log.i(TAG, "put table header = " + clickedData.getTitle());
-            Log.i(TAG, "put key = " + clickedData.getKey());
-            intent.putExtra(EXTRA_MESSAGE, "" + clickedData.getKey());
-            intent.putExtra(TABLE_HEADER, clickedData.getTitle());
-            context.startActivity(intent);
+
+            // Paragraph row was clicked, just refresh the table view;
+            // Otherwise arouse a new activity to display.
+            if(activityName.contains("ParagraphActivity")){
+                if (rowIndex == 0){
+                    // Ignore it if the first row is clicked.
+                } else {
+                    // Needs to refresh the table.
+                    final StpTableView myTableView = (StpTableView) activity.findViewById(R.id.tableView);
+                    ParaTableDataAdapter tableDataAdapter = (ParaTableDataAdapter)myTableView.getDataAdapter();
+
+                    // Replace the first row with the click row.
+                    tableDataAdapter.remove(tableDataAdapter.getItem(0));
+                    tableDataAdapter.insert(clickedData, 0);
+                    tableDataAdapter.notifyDataSetChanged();
+                }
+            } else {
+                Intent intent = getLinkedIntent(activityName);
+
+                intent.putExtra(EXTRA_MESSAGE, "" + clickedData.getKey());
+                intent.putExtra(TABLE_HEADER, clickedData.getTitle());
+                context.startActivity(intent);
+            }
         }
 
 
@@ -134,7 +156,7 @@ public class WebProxy extends AsyncTask<String, String, String> {
             linkedList.add(new Intent(context, TopicActivity.class));
             linkedList.add(new Intent(context, RulebookActivity.class));
             linkedList.add(new Intent(context, SectionActivity.class));
-            linkedList.add(new Intent(context, PublicationActivity.class));
+            linkedList.add(new Intent(context, ParagraphActivity.class));
 
             Log.i(TAG, "get next activity for: " + activityName);
             for (int i = 0; i < linkedList.size() - 1; i++) {
@@ -154,12 +176,17 @@ public class WebProxy extends AsyncTask<String, String, String> {
         Activity activity = (Activity) context;
         final StpTableView myTableView = (StpTableView) activity.findViewById(R.id.tableView);
 
-        myTableView.addDataClickListener(new MyTableClickListener());
-
         if(myTableView != null){
             try {
+
                 DataFactory dataFactory = new DataFactory(busType);
-                final MyTableDataAdapter tableDataAdapter = new MyTableDataAdapter(context, dataFactory.createTableList(jsonData), myTableView);
+                MyTableDataAdapter tableDataAdapter;
+                if (busType.equals("paragraph")){
+                    tableDataAdapter = new ParaTableDataAdapter(context, dataFactory.createParaList(jsonData), myTableView);
+                } else {
+                    tableDataAdapter = new MyTableDataAdapter(context, dataFactory.createTableList(jsonData), myTableView);
+                }
+                myTableView.addDataClickListener(new MyTableClickListener());
                 myTableView.setDataAdapter(tableDataAdapter);
             } catch (JSONException e){
                 Log.e("buildTable", e.getMessage());

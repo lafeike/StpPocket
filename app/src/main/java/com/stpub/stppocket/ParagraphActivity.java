@@ -10,27 +10,25 @@ import android.util.Log;
 import android.view.View;
 
 import com.stpub.stppocket.data.WebProxy;
-import com.stpub.stppocket.helper.Helper;
 
-public class SectionActivity extends AppCompatActivity {
+public class ParagraphActivity extends AppCompatActivity {
     public static final String EXTRA_MESSAGE = "EXTRA_MESSAGE";
     public static final String TABLE_HEADER = "TABLE_HEADER";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_section);
+        setContentView(R.layout.activity_paragraph);
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(toolbar);
 
         Intent intent = getIntent();
         String message = intent.getStringExtra(EXTRA_MESSAGE);
-        Log.i("INFO", "rbKey: " + message);
+        Log.i("INFO", "sectionKey: " + message);
 
-        if (message.length() != 0){
-            //myToolbar.setTitle(message);
-            WebProxy myTask = new WebProxy(this, "section");
-            myTask.execute("section", message);
+        if(message.length() != 0){
+            WebProxy myTask = new WebProxy(this, "paragraph");
+            myTask.execute("paragraph", message);
         }
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -42,4 +40,5 @@ public class SectionActivity extends AppCompatActivity {
             }
         });
     }
+
 }

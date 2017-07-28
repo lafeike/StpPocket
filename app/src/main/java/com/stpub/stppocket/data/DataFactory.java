@@ -1,5 +1,7 @@
 package com.stpub.stppocket.data;
 
+import android.util.Log;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -43,18 +45,44 @@ public final class DataFactory {
     public static List<TableData> createTableList(String jsonData) throws JSONException {
         final JSONArray jsonArray = new JSONArray(jsonData);
         final int n = jsonArray.length();
-        final List<TableData> tableDatas = new ArrayList<>();
+        final List<TableData> tableData = new ArrayList<>();
 
         String columnShow = getColumnName().get("showColumn");
         String columnHide = getColumnName().get("hideColumn");
 
         for (int i=0; i<n; i++){
-            final JSONObject tableData = jsonArray.getJSONObject(i);
-            TableData t = new TableData(tableData.getString(columnShow), tableData.getInt(columnHide));
-            tableDatas.add(t);
+            final JSONObject jsonObject = jsonArray.getJSONObject(i);
+            TableData t = new TableData(jsonObject.getString(columnShow), jsonObject.getInt(columnHide));
+            tableData.add(t);
         }
 
-        return tableDatas;
+        return tableData;
+    }
+
+
+    public static List<TableData> createParaList(String jsonData) throws  JSONException {
+        final JSONArray jsonArray = new JSONArray(jsonData);
+        final int n = jsonArray.length();
+        final List<TableData> tableData = new ArrayList<>();
+
+        // Add a placeholder in the first row. The first row in the table view will display
+        // the details of the selected row, so we put an extra row in the array
+        // to render the table view correctly.
+        Paragraph paragraph = new Paragraph("Mock", 0);
+        tableData.add(paragraph);
+
+        for (int i = 0; i < n; i++){
+            final JSONObject jsonObject = jsonArray.getJSONObject(i);
+            paragraph = new Paragraph(jsonObject.getString("citation"), jsonObject.getInt("paraKey"));
+            paragraph.setSectionKey(jsonObject.getInt("sectionKey"));
+            paragraph.setGuideNote(jsonObject.getString("guideNote"));
+            paragraph.setParaNum(jsonObject.getString("paraNum"));
+            paragraph.setQuestion(jsonObject.getString("question"));
+
+            tableData.add(paragraph);
+        }
+
+        return tableData;
     }
 
 
@@ -78,7 +106,8 @@ public final class DataFactory {
                 map.put("hideColumn", "sectionKey");
                 break;
             case "paragraph":
-                map.put("", "");
+                map.put("showColumn", "citation");
+                map.put("hideColumn", "paraKey");
                 break;
             default:
                 break;

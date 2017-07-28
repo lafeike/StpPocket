@@ -10,11 +10,8 @@
     <android.support.v7.widget.Toolbar
         android:id="@+id/my_toolbar"
         layout="@layout/app_bar"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="0dp"
-        android:layout_marginRight="0dp"
-        android:layout_marginTop="0dp"
         android:background="@color/colorPrimary"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -27,7 +24,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="@string/rulebook_toolbar"
+            android:text="@string/section_toolbar"
             android:textColor="@android:color/white" />
     </android.support.v7.widget.Toolbar>
 

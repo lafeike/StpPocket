@@ -24,7 +24,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="@string/paragraph_toolbar"
+            android:text="@string/publication_toolbar"
             android:textColor="@android:color/white" />
     </android.support.v7.widget.Toolbar>
 
@@ -50,6 +50,14 @@
         table:layout_constraintTop_toBottomOf="@+id/my_toolbar"
         table:tableView_columnCount="1"
         table:tableView_headerColor="@android:color/black" />
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:layout_editor_absoluteY="406dp"
+        tools:layout_editor_absoluteX="321dp" />
+
 
 
 </android.support.constraint.ConstraintLayout>

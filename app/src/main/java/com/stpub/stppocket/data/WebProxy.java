@@ -2,9 +2,12 @@ package com.stpub.stppocket.data;
 
 import android.app.Activity;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.content.Intent;
 import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.stpub.stppocket.ParagraphActivity;
@@ -27,6 +30,8 @@ import java.util.LinkedList;
 
 import de.codecrafters.tableview.listeners.TableDataClickListener;
 
+import static com.stpub.stppocket.R.id.progressBar;
+
 /**
  * Created by i-worx on 2017-07-13.
  */
@@ -48,6 +53,7 @@ public class WebProxy extends AsyncTask<String, String, String> {
     }
 
     protected void onPreExecute() {
+
         //progressBar.setVisibility(View.VISIBLE);
     }
 
@@ -58,27 +64,34 @@ public class WebProxy extends AsyncTask<String, String, String> {
             String busType = args[0];
             String para1 = args[1];
 
-            URL url;
-            if (count == 2){
-                url = new URL(URL_END_POINT + buildURL(busType, para1, null));
-            }else {
-                url = new URL(URL_END_POINT + buildURL(busType, para1, args[2]));
-            }
+            Log.i("WebProxy", "doInBackground: busType =" + busType + ", para1 = " + para1);
 
-            HttpURLConnection httpURLConnection = (HttpURLConnection)url.openConnection();
-
-            try {
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
-                StringBuilder stringBuilder = new StringBuilder();
-                String line;
-                while ((line = bufferedReader.readLine()) != null){
-                    stringBuilder.append(line).append("\n");
+            if(urlType.equals("offline")){
+                buildTableFromDb(busType, para1);
+                return null;
+            } else {
+                URL url;
+                if (count == 2){
+                    url = new URL(URL_END_POINT + buildURL(busType, para1, null));
+                }else {
+                    url = new URL(URL_END_POINT + buildURL(busType, para1, args[2]));
                 }
-                bufferedReader.close();
-                return stringBuilder.toString();
-            }
-            finally {
-                httpURLConnection.disconnect();
+
+                HttpURLConnection httpURLConnection = (HttpURLConnection)url.openConnection();
+
+                try {
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
+                    StringBuilder stringBuilder = new StringBuilder();
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null){
+                        stringBuilder.append(line).append("\n");
+                    }
+                    bufferedReader.close();
+                    return stringBuilder.toString();
+                }
+                finally {
+                    httpURLConnection.disconnect();
+                }
             }
         }
         catch (Exception e)
@@ -108,6 +121,9 @@ public class WebProxy extends AsyncTask<String, String, String> {
                 break;
             case "paragraph":
                 result = "Para?SectionKey=" + value1;
+                break;
+            case "download":
+                result = "PublicationsController/" + value1 + "/" + value2;
                 break;
             default:
                 break;
@@ -172,6 +188,24 @@ public class WebProxy extends AsyncTask<String, String, String> {
     }
 
 
+    private void buildTableFromDb(String busType, String value){
+        Log.i("WebProxy", "busType=" + busType + " value =" + value);
+        Activity activity = (Activity)context;
+        final StpTableView stpTableView = (StpTableView) activity.findViewById(R.id.tableView);
+        stpTableView.addDataClickListener(new MyTableClickListener());
+
+        if(stpTableView != null){
+            try {
+                DBHandler db = new DBHandler(activity);
+                SQLiteDatabase stpDb = db.getReadableDatabase();
+                final MyTableDataAdapter tableDataAdapter = new MyTableDataAdapter(context, db.getTableData(stpDb, busType, value), stpTableView);
+                stpTableView.setDataAdapter(tableDataAdapter);
+            } catch (Exception e){
+                Log.e("PublicationActivity", e.getMessage());
+            }
+        }
+    }
+
     private void buildTable(String busType, String jsonData){
         Activity activity = (Activity) context;
         final StpTableView myTableView = (StpTableView) activity.findViewById(R.id.tableView);
@@ -190,6 +224,7 @@ public class WebProxy extends AsyncTask<String, String, String> {
                 myTableView.setDataAdapter(tableDataAdapter);
             } catch (JSONException e){
                 Log.e("buildTable", e.getMessage());
+                e.printStackTrace();
             }
         }
     }
@@ -197,8 +232,33 @@ public class WebProxy extends AsyncTask<String, String, String> {
 
     protected void onPostExecute(String response){
         //progressBar.setVisibility(View.GONE);
-        Log.i("IN FO", response);
-        buildTable(urlType, response);
+        //Log.i("INFO", response);
+        if(urlType.equals("download")){
+            // Save data into SQLite.
+            Log.d("DEBUG", "Now start to save publication into SQLite.");
+            DBHandler db = new DBHandler(context);
+            SQLiteDatabase stpDB = db.getWritableDatabase();
+            DataFactory dataFactory = new DataFactory(urlType);
+            try {
+                db.addPublication(stpDB, dataFactory.extractPublication(response));
+                db.addTable(stpDB, dataFactory.extractTable(response, "topic"), "topic");
+                db.addTable(stpDB, dataFactory.extractTable(response, "rulebook"), "rulebook");
+            }
+            catch (JSONException e){
+                Log.e("ERROR", e.getMessage());
+            }
+            finally {
+                Log.i("WebProxy", "downloaded.");
+                db.close();
+            }
+        }else if(urlType.equals("offline")) {
+            // do nothing.
+        }
+        else{
+            // Refresh table view.
+            buildTable(urlType, response);
+        }
+
         return;
     }
 }

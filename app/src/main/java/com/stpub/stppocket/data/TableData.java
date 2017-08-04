@@ -8,6 +8,7 @@ public class TableData {
 
     private  String title;
     private int key;
+    private String parentKey;
 
     public TableData(final String title, final int key){
         this.title = title;
@@ -30,6 +31,16 @@ public class TableData {
 
     public void setKey(final int key) {
         this.key = key;
+    }
+
+
+    public String getParentKey(){
+        return parentKey;
+    }
+
+
+    public void setParentKey(String parentKey){
+        this.parentKey = parentKey;
     }
 
 

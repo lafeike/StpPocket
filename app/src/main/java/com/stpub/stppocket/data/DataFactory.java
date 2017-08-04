@@ -8,6 +8,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +41,63 @@ public final class DataFactory {
 
         return  pubs;
     }
+
+
+    public static Publication extractPublication(String jsonData) throws  JSONException {
+        final JSONObject jsonObject = new JSONObject(jsonData);
+        final JSONObject pub = jsonObject.getJSONObject("pb");
+
+        //final JSONObject pub = jsonArray.getJSONObject(0);
+        Publication p = new Publication(pub.getString("acronym"), pub.getString("title"));
+        p.setPid(pub.getInt("publicationID"));
+
+        return p;
+    }
+
+
+    public static List<TableData> extractTable(String jsonData, String urlType) throws JSONException {
+        final JSONObject jsonObject = new JSONObject(jsonData);
+        final List<TableData> tableData = new ArrayList<>();
+        JSONObject json;
+        JSONArray jsonArray;
+        Log.i("DataFactory", "urlType = " + urlType);
+        switch (urlType){
+            case "topic":
+                jsonArray = jsonObject.getJSONArray("tp");
+                break;
+            case "rulebook":
+                jsonArray = jsonObject.getJSONArray("rb");
+                break;
+            case "section":
+                jsonArray = jsonObject.getJSONArray("st");
+                break;
+            case "paragraph":
+                jsonArray = jsonObject.getJSONArray("pg");
+                break;
+            default:
+                jsonArray = null;
+        }
+
+        final int n = jsonArray.length();
+        Log.i("DataFactory", "get json object tp: " + n);
+
+        String columnShow = getColumnName(urlType).get("showColumn");
+        String columnHide = getColumnName(urlType).get("hideColumn");
+        String parentKeyName = getColumnName(urlType).get("parentKeyName");
+        Log.i("DataFactory", "columnShow: " + columnShow);
+
+        for (int i=0; i<n; i++){
+            final JSONObject j = jsonArray.getJSONObject(i);
+            TableData t = new TableData(j.getString(columnShow), j.getInt(columnHide));
+            t.setParentKey(j.getString(parentKeyName));
+            tableData.add(t);
+        }
+
+        return tableData;
+    }
+
+
+
 
 
     public static List<TableData> createTableList(String jsonData) throws JSONException {
@@ -83,6 +141,42 @@ public final class DataFactory {
         }
 
         return tableData;
+    }
+
+
+    public static Map<String, String> getColumnName(String urlType){
+        Map<String, String> map = new HashMap<String, String>();
+        switch (urlType){
+            case "publication":
+                map.put("showColumn", "title");
+                map.put("hideColumn", "acronym");
+                map.put("parentKeyName", "");
+                break;
+            case "topic":
+                map.put("showColumn", "topic");
+                map.put("hideColumn", "topicKey");
+                map.put("parentKeyName", "acronym");
+                break;
+            case "rulebook":
+                map.put("showColumn", "rbName");
+                map.put("hideColumn", "rbKey");
+                map.put("parentKeyName", "topicKey");
+                break;
+            case "section":
+                map.put("showColumn", "sectName");
+                map.put("hideColumn", "sectionKey");
+                map.put("parentKeyName", "rbKey");
+                break;
+            case "paragraph":
+                map.put("showColumn", "citation");
+                map.put("hideColumn", "paraKey");
+                map.put("parentKeyName", "sectionKey");
+                break;
+            default:
+                break;
+        }
+
+        return map;
     }
 
 

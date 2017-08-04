@@ -1,7 +1,10 @@
 package com.stpub.stppocket;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -13,8 +16,10 @@ import android.widget.ProgressBar;
 import android.widget.TableLayout;
 import android.widget.Toast;
 
+import com.stpub.stppocket.data.DBHandler;
 import com.stpub.stppocket.data.DataFactory;
 import com.stpub.stppocket.data.Publication;
+import com.stpub.stppocket.data.WebProxy;
 import com.stpub.stppocket.helper.Helper;
 
 import org.json.JSONException;
@@ -33,6 +38,9 @@ import de.codecrafters.tableview.listeners.TableDataLongClickListener;
 
 
 import static com.stpub.stppocket.R.id.progressBar;
+import static com.stpub.stppocket.R.id.tableView;
+
+import com.stpub.stppocket.helper.Helper;
 
 public class PublicationActivity extends AppCompatActivity {
     ProgressBar progressBar;
@@ -49,17 +57,21 @@ public class PublicationActivity extends AppCompatActivity {
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        progressBar.setVisibility(View.INVISIBLE);
 
         Intent intent = getIntent();
         String message = intent.getStringExtra(MainActivity.EXTRA_MESSAGE);
+        if(message.equals("offline")){ // User clicked 'Browse Offline' button, display the downloaded publications.
+            buildTable();
+        } else {
+            ((Helper) this.getApplication()).setUserId(String.valueOf(message));
 
-        ((Helper) this.getApplication()).setUserId(String.valueOf(message));
-
-        if (message.length() != 0){
-            //myToolbar.setTitle(message);
-            //setSupportActionBar(myToolbar);
-            CallWebApi myTask = new CallWebApi();
-            myTask.execute(message);
+            if (message.length() != 0){
+                //myToolbar.setTitle(message);
+                //setSupportActionBar(myToolbar);
+                CallWebApi myTask = new CallWebApi();
+                myTask.execute(message);
+            }
         }
     }
 
@@ -75,26 +87,63 @@ public class PublicationActivity extends AppCompatActivity {
 
         @Override
         public void onDataClicked(final int rowIndex, final Publication clickedData){
+            Log.i("clickListener", "acronym =" + clickedData.getAcronym());
             showTopic(clickedData.getAcronym(), clickedData.getTitle());
         }
     }
 
 
-    private class PublicationLongclickListener implements TableDataLongClickListener<Publication>{
+    private class PublicationLongClickListener implements TableDataLongClickListener<Publication>{
 
         @Override
         public boolean onDataLongClicked(int rowIndex, final Publication clickedData){
             final String acronym = "Download " + clickedData.getAcronym() + "?";
-            Toast.makeText(PublicationActivity.this, acronym, Toast.LENGTH_SHORT).show();
+            //Toast.makeText(PublicationActivity.this, acronym, Toast.LENGTH_SHORT).show();
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(PublicationActivity.this);
+            builder.setTitle("Download Publication")
+                .setMessage("Begin to download " + clickedData.getAcronym() + "?")
+                .setPositiveButton( "Yes",
+                    new DialogInterface.OnClickListener(){
+                        public void onClick(DialogInterface dialog, int which){
+                            Log.i("PublicationActivity", "will downloading.");
+                            progressBar.setVisibility(View.VISIBLE);
+                            dialog.dismiss();
+                            downloadPublication(clickedData.getAcronym());
+                        }
+                    })
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which){
+                                Log.i("PublicationActivity", "cancel downloading.");
+                                dialog.dismiss();
+                }
+
+            }).show();
+
             return true;
+        }
+
+
+        private void downloadPublication(String acronym){
+            WebProxy myTask = new WebProxy(PublicationActivity.this, "download");
+            String userId = ((Helper)PublicationActivity.this.getApplication()).getUserId();
+            myTask.execute("download", acronym, userId);
         }
     }
 
 
+
+
+
     private void showTopic(String acronym, String title){
         Intent intent = new Intent(this, TopicActivity.class);
+        String message = getIntent().getStringExtra(MainActivity.EXTRA_MESSAGE);
+        Log.i("showTopic", "title = " + title + ", message = " + message);
         intent.putExtra(EXTRA_MESSAGE, acronym);
+
         intent.putExtra("TABLE_HEADER", title);
+        Log.i("showTopic", "will start activity topic.");
         startActivity(intent);
     }
 
@@ -147,10 +196,30 @@ public class PublicationActivity extends AppCompatActivity {
         }
     }
 
+
+    // build table view with SQLite data
+    private void buildTable(){
+        final StpTableView stpTableView = (StpTableView) findViewById(R.id.tableView);
+        stpTableView.addDataClickListener(new PublicationClickListener());
+
+        if(stpTableView != null){
+            try {
+                DBHandler db = new DBHandler(this);
+                SQLiteDatabase stpDb = db.getReadableDatabase();
+                final PublicationTableDataAdapter publicationTableDataAdapter = new PublicationTableDataAdapter(this, db.getAllPublications(stpDb), stpTableView);
+                stpTableView.setDataAdapter(publicationTableDataAdapter);
+            } catch (Exception e){
+                Log.e("PublicationActivity", e.getMessage());
+            }
+        }
+    }
+
+
+    // Build table view with json string.
     private void buildTable(String jsonData){
         final StpTableView publicationTableView = (StpTableView) findViewById(R.id.tableView);
         publicationTableView.addDataClickListener(new PublicationClickListener());
-        publicationTableView.addDataLongClickListener(new PublicationLongclickListener());
+        publicationTableView.addDataLongClickListener(new PublicationLongClickListener());
 
         if(publicationTableView != null){
             try {

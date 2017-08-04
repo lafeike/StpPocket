@@ -3,6 +3,7 @@ package com.stpub.stppocket;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -43,7 +44,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 
+import com.stpub.stppocket.data.DBHandler;
+import com.stpub.stppocket.data.Publication;
 import com.stpub.stppocket.helper.Helper;
 
 import static android.R.attr.handle;
@@ -90,10 +94,17 @@ public class MainActivity extends AppCompatActivity implements
         username = (EditText) findViewById(R.id.etUserName);
         password = (EditText) findViewById(R.id.etPassword);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        progressBar.setVisibility(View.INVISIBLE);
         btnLogin = (Button) findViewById(R.id.btnLogin);
         btnBrowseLocal = (Button) findViewById(R.id.btnBrowseLocal);
         btnLogin.setOnClickListener(this);
         btnBrowseLocal.setOnClickListener(this);
+
+        if(hasOfflineData()){
+            btnBrowseLocal.setEnabled(true);
+        } else {
+            btnBrowseLocal.setEnabled(false);
+        }
 
         // create an instance of GoogleApiClient to request stored credentials
         buildGoogleApiClient(null);
@@ -358,8 +369,31 @@ public class MainActivity extends AppCompatActivity implements
                 HttpAsyncTask myTask = new HttpAsyncTask(this);
                 myTask.execute("a", "b");
                 break;
+            case R.id.btnBrowseLocal:
+                Log.i("MainActivity", "will start local browsing.");
+                // Check if there are local data.
+                if (hasOfflineData()){
+                    Intent intent = new Intent(this, PublicationActivity.class);
+                    intent.putExtra(EXTRA_MESSAGE, "offline");
+                    ((Helper)this.getApplication()).setOffline(true);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(getBaseContext(), "No publications downloaded.", Toast.LENGTH_LONG).show();
+                }
+                break;
         }
 
+    }
+
+
+    private boolean hasOfflineData(){
+        DBHandler db = new DBHandler(this);
+        SQLiteDatabase stpDb = db.getReadableDatabase();
+        List<Publication> pubs = db.getAllPublications(stpDb);
+        if (pubs.size() > 0)
+            return true;
+        else
+            return false;
     }
 
     private class HttpAsyncTask extends AsyncTask<String, String, String> {
@@ -413,5 +447,8 @@ public class MainActivity extends AppCompatActivity implements
 
             return POST(URL_END_POINT + "users");
         }
+
+
+
     }
 }

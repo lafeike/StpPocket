@@ -26,6 +26,8 @@ public class DBHandler extends SQLiteOpenHelper {
 
     private static final String TABLE_TOPIC = "topic";
     private static final String TABLE_RULEBOOK = "rulebook";
+    private static final String TABLE_SECTION = "section";
+    private static final String TABLE_PARAGRAPH = "paragraph";
 
 
     public DBHandler(Context context){
@@ -47,9 +49,22 @@ public class DBHandler extends SQLiteOpenHelper {
                 + "rb_key integer primary key,"
                 + "rbname text,"
                 + "topic_key text)";
+        String CREATE_SECTION_TABLE = "create table if not exists " + TABLE_SECTION + "("
+                + "section_key integer primary key,"
+                + "section_name text,"
+                + "rb_key text)";
+        String CREATE_PARAGRAPH_TABLE = "create table if not exists " + TABLE_PARAGRAPH + "("
+                + "para_key integer primary key,"
+                + "section_key integer,"
+                + "para_num text,"
+                + "question text,"
+                + "guide_note text,"
+                + "citation text)";
         db.execSQL(CREATE_PUBLICATION_TABLE);
         db.execSQL(CREATE_TOPIC_TABLE);
         db.execSQL(CREATE_RULEBOOK_TABLE);
+        db.execSQL(CREATE_SECTION_TABLE);
+        db.execSQL(CREATE_PARAGRAPH_TABLE);
     }
 
 
@@ -58,40 +73,76 @@ public class DBHandler extends SQLiteOpenHelper {
         db.execSQL("drop table if exists " + TABLE_PUBLICATION);
         db.execSQL("drop table if exists " + TABLE_TOPIC);
         db.execSQL("drop table if exists " + TABLE_RULEBOOK);
+        db.execSQL("drop table if exists " + TABLE_SECTION);
+        db.execSQL("drop table if exists " + TABLE_PARAGRAPH);
         onCreate(db);
     }
 
 
     public void addPublication(SQLiteDatabase db, Publication publication){
-        //SQLiteDatabase db = this.getWritableDatabase();
+        deletePublication(db, publication.getAcronym());
+
         ContentValues values = new ContentValues();
         values.put(KEY_ACRONYM, publication.getAcronym());
         values.put(KEY_PID, publication.getPid());
         values.put(KEY_TITLE, publication.getTitle());
-        deletePublication(db, publication.getAcronym());
+
         db.insert(TABLE_PUBLICATION, null, values);
-        //db.close();
     }
 
 
     public void deletePublication(SQLiteDatabase db, String acronym){
-        //SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cTopic = db.rawQuery("select topic_key from topic where acronym='" + acronym + "'", null);
+        if (cTopic.moveToFirst()){
+            do {
+                Integer topicKey = cTopic.getInt(0);
+                Cursor cRulebook = db.rawQuery("select rb_key from rulebook where topic_key='" + topicKey + "'", null);
+                if(cRulebook.moveToFirst()){
+                    do{
+                        Integer rbKey = cRulebook.getInt(0);
+                        Cursor cSection = db.rawQuery("select section_key from section where rb_key='" + rbKey + "'", null);
+                        if(cSection.moveToFirst()){
+                            do{
+                                Integer sectionKey = cSection.getInt(0);
+                                db.delete(TABLE_PARAGRAPH, "section_key=?", new String[]{String.valueOf(sectionKey)});
+                            } while (cSection.moveToNext());
+                        }
+                        db.delete(TABLE_SECTION, "rb_key=?", new String[]{String.valueOf(rbKey)});
+                    } while (cRulebook.moveToNext());
+                }
+                db.delete(TABLE_RULEBOOK, "topic_key=?", new String[]{String.valueOf(topicKey)});
+            }while (cTopic.moveToNext());
+            db.delete(TABLE_TOPIC, "acronym=?", new String[]{acronym});
+        }
+
         db.delete(TABLE_PUBLICATION, "acronym=?", new String[]{acronym});
-        // db.close();
     }
 
 
     public void addTable(SQLiteDatabase db, List<TableData> tableData, String tableName){
-        //SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         String[] cName = getTableColumn(tableName);
+
         for (int i = 0; i < tableData.size(); i++) {
             values.put(cName[1], tableData.get(i).getKey());
             values.put(cName[2], tableData.get(i).getParentKey());
             values.put(cName[0], tableData.get(i).getTitle());
             db.insert(tableName, null, values);
         }
-        //db.close();
+    }
+
+
+    public void addParagraph(SQLiteDatabase db, List<Paragraph> paragraphs){
+        ContentValues values = new ContentValues();
+        for(int i = 0; i < paragraphs.size(); i++) {
+            values.put("para_key", paragraphs.get(i).getKey());
+            values.put("citation", paragraphs.get(i).getTitle());
+            values.put("section_key", paragraphs.get(i).getSectionKey());
+            values.put("para_num", paragraphs.get(i).getParaNum());
+            values.put("question", paragraphs.get(i).getQuestion());
+            values.put("guide_note", paragraphs.get(i).getGuideNote());
+            db.insert("paragraph", null, values);
+        }
     }
 
 
@@ -104,7 +155,7 @@ public class DBHandler extends SQLiteOpenHelper {
             do {
                 TableData t = new TableData(cursor.getString(0), cursor.getInt(1));
                 t.setParentKey(cursor.getString(2));
-                Log.i("getData", "title=" + cursor.getString(0) + ", key=" + cursor.getInt(1) + ", parentKey=" + cursor.getString(2));
+
                 tableDataList.add(t);
             } while (cursor.moveToNext());
         }
@@ -113,11 +164,36 @@ public class DBHandler extends SQLiteOpenHelper {
     }
 
 
+    public List<TableData> getParagraph(SQLiteDatabase db, String sectionKey){
+        List<TableData> paragraphList = new ArrayList<>();
+
+        Cursor cursor = db.query("paragraph",
+                new String[]{"para_key", "citation", "section_key", "para_num", "question", "guide_note"},
+                "section_key=?", new String[]{sectionKey},
+                null, null, null, null);
+        Paragraph p = new Paragraph("Mock", 0); // add a placeholder in the first row.
+        paragraphList.add(p);
+
+        if(cursor.moveToFirst()){
+            do {
+                Paragraph paragraph = new Paragraph(cursor.getString(1), cursor.getInt(0));
+                paragraph.setSectionKey(cursor.getInt(2));
+                paragraph.setGuideNote(cursor.getString(5));
+                paragraph.setParaNum(cursor.getString(3));
+                paragraph.setQuestion(cursor.getString(4));
+                paragraphList.add(paragraph);
+            } while (cursor.moveToNext());
+        }
+
+        return paragraphList;
+    }
+
+
     private String[] getTableColumn(String tableName){
 
         String[] topicColumn = {"topic", "topic_key", "acronym"};
         String[] rulebookColumn = {"rbname", "rb_key", "topic_key"};
-        String[] sectionColumn = {"sectname", "section_key", "rb_key"};
+        String[] sectionColumn = {"section_name", "section_key", "rb_key"};
 
         switch (tableName){
             case "topic":
@@ -142,6 +218,12 @@ public class DBHandler extends SQLiteOpenHelper {
                     break;
                 case "rulebook":
                     key = "topic_key";
+                    break;
+                case "section":
+                    key = "rb_key";
+                    break;
+                case "paragraph":
+                    key = "section_key";
                     break;
             }
         }
@@ -180,5 +262,4 @@ public class DBHandler extends SQLiteOpenHelper {
 
         return pubList;
     }
-
 }

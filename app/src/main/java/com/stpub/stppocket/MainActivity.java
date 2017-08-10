@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -78,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements
     private static final int RC_SIGN_IN = 1;
     private static final int RC_CREDENTIALS_READ = 2;
     private static final int RC_CREDENTIALS_SAVE = 3;
+
+    private long mLastClickTime = 0; // Record the last click time when clicking, to prevent double click.
 
 
     @Override
@@ -282,55 +285,7 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    public static String POST(String urlString) {
-        InputStream inputStream = null;
-        String result = "";
-        try {
-            URL url = new URL(urlString);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-            try {
-                connection.setDoOutput(true);
-                connection.setDoInput(true);
-                connection.setRequestProperty("User-Agent", "");
-                connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestMethod("POST");
-
-                String json = "{\"email\":\"rafyz@stpub.com\",\"password\":\"slcye2yd\"}";
-
-                OutputStream os = connection.getOutputStream();
-                os.write(json.getBytes("UTF-8"));
-                os.close();
-
-                StringBuilder sb = new StringBuilder();
-                int HttpResult = connection.getResponseCode();
-                if (HttpResult == HttpURLConnection.HTTP_OK) {
-                    BufferedReader br = new BufferedReader(
-                            new InputStreamReader(connection.getInputStream(), "utf-8"));
-                    String line = null;
-                    while ((line = br.readLine()) != null) {
-                        sb.append(line + "\n");
-                    }
-                    br.close();
-
-                    result = sb.toString();
-                    System.out.println("Got response from server: " + result);
-
-                } else {
-                    System.out.println(connection.getResponseMessage());
-                }
-                return result;
-            }
-            finally {
-                connection.disconnect();
-            }
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 
 
     private boolean validateUI(){
@@ -354,20 +309,24 @@ public class MainActivity extends AppCompatActivity implements
         return uiValid;
     }
 
-    private void checkLogin(String user, String password) {
-
-    }
 
     @Override
     public void onClick(View view) {
-
+        if (SystemClock.elapsedRealtime() - mLastClickTime < 1000){
+            Log.e("DEBUG", "multiple click.");
+            return;
+        }
+        mLastClickTime = SystemClock.elapsedRealtime();
         switch(view.getId()){
             case R.id.btnLogin:
-                if(!validateUI())
-                    Toast.makeText(getBaseContext(), "Enter some data!", Toast.LENGTH_LONG).show();
+                if(!validateUI()) {
+                    Toast.makeText(getBaseContext(), "Invalid email or password!", Toast.LENGTH_LONG).show();
+                    return;
+                }
                 // call AsynTask to perform network operation on separate thread
+                ((Helper)this.getApplication()).setOffline(false);
                 HttpAsyncTask myTask = new HttpAsyncTask(this);
-                myTask.execute("a", "b");
+                myTask.execute(username.getText().toString(), password.getText().toString());
                 break;
             case R.id.btnBrowseLocal:
                 Log.i("MainActivity", "will start local browsing.");
@@ -390,14 +349,15 @@ public class MainActivity extends AppCompatActivity implements
         DBHandler db = new DBHandler(this);
         SQLiteDatabase stpDb = db.getReadableDatabase();
         List<Publication> pubs = db.getAllPublications(stpDb);
+
         if (pubs.size() > 0)
             return true;
         else
             return false;
     }
 
-    private class HttpAsyncTask extends AsyncTask<String, String, String> {
-        private Exception exception;
+    private class HttpAsyncTask extends AsyncTask<String, String, HttpAsyncTask.AsyncTaskResult<String>> {
+        private Exception exception = null;
         private Context context;
 
         public HttpAsyncTask(Context context){
@@ -408,14 +368,19 @@ public class MainActivity extends AppCompatActivity implements
             progressBar.setVisibility(View.VISIBLE);
         }
 
-        protected  void  onPostExecute(String response) {
-            if (response == null){
-                response = "There was an error.";
-            }
+        protected  void  onPostExecute(AsyncTaskResult<String> result) {
             progressBar.setVisibility(View.GONE);
+
+            if (result.getError() != null){
+                Log.i("DEBUG", result.getError().getMessage() + getBaseContext().toString());
+                Toast.makeText(getBaseContext(), result.getError().getMessage(), Toast.LENGTH_SHORT).show();
+
+                return;
+            }
+
            // Log.i("INFO", response);
             try {
-                JSONArray jsonArray = new JSONArray(response);
+                JSONArray jsonArray = new JSONArray(result.getResult());
                 JSONObject jsonObject = jsonArray.getJSONObject(0);
                 int userid = jsonObject.getInt("userid");
                 Intent intent = new Intent(context, PublicationActivity.class);
@@ -435,19 +400,97 @@ public class MainActivity extends AppCompatActivity implements
             }
             catch (Exception e){
                 e.printStackTrace();
+                Toast.makeText(getBaseContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
             }
 
         }
 
         @Override
-        protected String doInBackground(String... args){
-            String user = args[0];
-            String pass = args[1];
-            String URL_END_POINT = getString(R.string.URL_END_POINT);
-
-            return POST(URL_END_POINT + "users");
+        protected AsyncTaskResult<String> doInBackground(String... args){
+            return POST(getString(R.string.URL_END_POINT) + "users", args[0], args[1]);
         }
 
+
+        public  AsyncTaskResult<String> POST(String urlString, String user, String pwd) {
+
+            try {
+                URL url = new URL(urlString);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+                try {
+                    connection.setDoOutput(true);
+                    connection.setDoInput(true);
+                    connection.setRequestProperty("User-Agent", "");
+                    connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                    connection.setRequestProperty("Accept", "application/json");
+                    connection.setRequestMethod("POST");
+
+                    //String json = "{\"email\":\"rafyz@stpub.com\",\"password\":\"slcye2yd\"}";
+                    String json = "{\"email\":\"" + user +"\",\"password\":\"" + pwd + "\"}";
+                    Log.i("login", "email = " + user + ", password = " + pwd);
+                    OutputStream os = connection.getOutputStream();
+                    os.write(json.getBytes("UTF-8"));
+                    os.close();
+
+                    StringBuilder sb = new StringBuilder();
+                    int HttpResult = connection.getResponseCode();
+                    if (HttpResult == HttpURLConnection.HTTP_OK) {
+                        BufferedReader br = new BufferedReader(
+                                new InputStreamReader(connection.getInputStream(), "utf-8"));
+                        String line = null;
+                        while ((line = br.readLine()) != null) {
+                            sb.append(line + "\n");
+                        }
+                        br.close();
+
+                        return new AsyncTaskResult<String> (sb.toString());
+                    }
+                    else if(HttpResult == HttpURLConnection.HTTP_NOT_FOUND){
+                        return new AsyncTaskResult<String>(new Exception("Bad email or password.") );
+                    }
+                    else {
+                        return new AsyncTaskResult<String>(new Exception(connection.getResponseMessage()) );
+                    }
+
+                }
+                catch (Exception e){
+                    Log.e("ManiActivity", "ee" + e.getMessage());
+                    return new AsyncTaskResult<String> (e);
+                }
+                finally {
+                    connection.disconnect();
+                }
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+                this.exception = e;
+                return new AsyncTaskResult<String> (e);
+            }
+        }
+
+
+        public class AsyncTaskResult<String> {
+            private String result;
+            private Exception error;
+
+            public String getResult() {
+                return result;
+            }
+
+            public Exception getError() {
+                return error;
+            }
+
+            public AsyncTaskResult(String result) {
+                super();
+                this.result = result;
+            }
+
+            public AsyncTaskResult(Exception error) {
+                super();
+                this.error = error;
+            }
+        }
 
 
     }

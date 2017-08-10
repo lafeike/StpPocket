@@ -32,12 +32,18 @@ public class RulebookActivity extends AppCompatActivity {
         String message = intent.getStringExtra(EXTRA_MESSAGE);
         Log.i("INFO", "TopicKey: " + message);
 
-        if (message.length() != 0){
-            //myToolbar.setTitle(message);
-
-            WebProxy myTask = new WebProxy(this, "rulebook");
+        if(((Helper) this.getApplication()).getOffline()){
+            WebProxy myTask = new WebProxy(this, "offline");
             myTask.execute("rulebook", message);
+        } else {
+            if (message.length() != 0){
+                //myToolbar.setTitle(message);
+
+                WebProxy myTask = new WebProxy(this, "rulebook");
+                myTask.execute("rulebook", message);
+            }
         }
+
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {

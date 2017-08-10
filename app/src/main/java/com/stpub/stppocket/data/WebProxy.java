@@ -43,6 +43,8 @@ public class WebProxy extends AsyncTask<String, String, String> {
     public String tableHeaderText;
     private  Exception exception;
 
+    ProgressBar progressBar;
+
     public static final String EXTRA_MESSAGE = "EXTRA_MESSAGE";
     public static final String TABLE_HEADER = "TABLE_HEADER";
     public static final String TAG = "WebProxy";
@@ -50,11 +52,11 @@ public class WebProxy extends AsyncTask<String, String, String> {
     public WebProxy(Context context, String urlType){
         this.context = context;
         this.urlType = urlType;
+
     }
 
-    protected void onPreExecute() {
+    protected void onPreExecute() {// needs to change here.
 
-        //progressBar.setVisibility(View.VISIBLE);
     }
 
     protected String doInBackground(String... args){
@@ -138,7 +140,7 @@ public class WebProxy extends AsyncTask<String, String, String> {
         public void onDataClicked(final int rowIndex, final TableData clickedData){
             Activity activity = (Activity) context;
             String activityName = activity.getClass().getName();
-
+            Log.d("onDataClick", "rowIndex = " + rowIndex );
             // Paragraph row was clicked, just refresh the table view;
             // Otherwise arouse a new activity to display.
             if(activityName.contains("ParagraphActivity")){
@@ -152,6 +154,7 @@ public class WebProxy extends AsyncTask<String, String, String> {
                     // Replace the first row with the click row.
                     tableDataAdapter.remove(tableDataAdapter.getItem(0));
                     tableDataAdapter.insert(clickedData, 0);
+                    Log.d("onDataClick", "count = " + tableDataAdapter.getCount() );
                     tableDataAdapter.notifyDataSetChanged();
                 }
             } else {
@@ -174,11 +177,8 @@ public class WebProxy extends AsyncTask<String, String, String> {
             linkedList.add(new Intent(context, SectionActivity.class));
             linkedList.add(new Intent(context, ParagraphActivity.class));
 
-            Log.i(TAG, "get next activity for: " + activityName);
             for (int i = 0; i < linkedList.size() - 1; i++) {
-                Log.i(TAG, "loop:" + linkedList.get(i).getComponent().getClassName());
                 if (activityName.contains(linkedList.get(i).getComponent().getClassName())){
-                    Log.i(TAG, "getLinkedIntent return: " + linkedList.get(i+1).getComponent().getClassName());
                     return linkedList.get(i + 1);
                 }
             }
@@ -189,19 +189,29 @@ public class WebProxy extends AsyncTask<String, String, String> {
 
 
     private void buildTableFromDb(String busType, String value){
-        Log.i("WebProxy", "busType=" + busType + " value =" + value);
-        Activity activity = (Activity)context;
+        Log.i("FromDB", "busType=" + busType + " value =" + value);
+        Activity activity = (Activity) context;
         final StpTableView stpTableView = (StpTableView) activity.findViewById(R.id.tableView);
-        stpTableView.addDataClickListener(new MyTableClickListener());
-
+        Log.d("WebProxy", "activity =" + activity.getLocalClassName());
         if(stpTableView != null){
+            DBHandler db = new DBHandler(activity);
             try {
-                DBHandler db = new DBHandler(activity);
+
                 SQLiteDatabase stpDb = db.getReadableDatabase();
-                final MyTableDataAdapter tableDataAdapter = new MyTableDataAdapter(context, db.getTableData(stpDb, busType, value), stpTableView);
+                MyTableDataAdapter tableDataAdapter;
+                if(busType.equals("paragraph")){
+                    tableDataAdapter = new ParaTableDataAdapter(context, db.getParagraph(stpDb, value), stpTableView);
+                } else {
+                    tableDataAdapter = new MyTableDataAdapter(context, db.getTableData(stpDb, busType, value), stpTableView);
+                }
+
                 stpTableView.setDataAdapter(tableDataAdapter);
+                stpTableView.addDataClickListener(new MyTableClickListener());
             } catch (Exception e){
-                Log.e("PublicationActivity", e.getMessage());
+                Log.e("WebProxy", e.getMessage());
+                e.printStackTrace();
+            } finally {
+                db.close();
             }
         }
     }
@@ -243,6 +253,11 @@ public class WebProxy extends AsyncTask<String, String, String> {
                 db.addPublication(stpDB, dataFactory.extractPublication(response));
                 db.addTable(stpDB, dataFactory.extractTable(response, "topic"), "topic");
                 db.addTable(stpDB, dataFactory.extractTable(response, "rulebook"), "rulebook");
+                db.addTable(stpDB, dataFactory.extractTable(response, "section"), "section");
+                db.addParagraph(stpDB, dataFactory.extractParagraph(response));
+                PublicationActivity activity = (PublicationActivity) context;
+                activity.hideProgressBar();
+                activity.showMessage("Downloaded successfully.");
             }
             catch (JSONException e){
                 Log.e("ERROR", e.getMessage());
@@ -253,9 +268,11 @@ public class WebProxy extends AsyncTask<String, String, String> {
             }
         }else if(urlType.equals("offline")) {
             // do nothing.
+            Log.d("WebProxy", "offline.");
         }
         else{
             // Refresh table view.
+            Log.d("WebProxy", "build table.");
             buildTable(urlType, response);
         }
 

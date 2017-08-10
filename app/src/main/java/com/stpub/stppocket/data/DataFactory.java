@@ -97,7 +97,27 @@ public final class DataFactory {
     }
 
 
+    public static List<Paragraph> extractParagraph(String jsonData) throws JSONException {
+        final JSONObject jsonObject = new JSONObject(jsonData);
+        final List<Paragraph> tableData = new ArrayList<>();
+        JSONObject json;
 
+        JSONArray jsonArray = jsonObject.getJSONArray("pg");
+        final int n = jsonArray.length();
+        Log.i("DataFactory", "get json object pg: " + n);
+
+        for (int i=0; i<n; i++){
+            final JSONObject j = jsonArray.getJSONObject(i);
+            Paragraph p = new Paragraph(j.getString("citation"), j.getInt("paraKey"));
+            p.setSectionKey(j.getInt("sectionKey"));
+            p.setParaNum(j.getString("paraNum"));
+            p.setGuideNote(j.getString("guideNote"));
+            p.setQuestion(j.getString("question"));
+            tableData.add(p);
+        }
+
+        return tableData;
+    }
 
 
     public static List<TableData> createTableList(String jsonData) throws JSONException {

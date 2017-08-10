@@ -27,10 +27,15 @@ public class SectionActivity extends AppCompatActivity {
         String message = intent.getStringExtra(EXTRA_MESSAGE);
         Log.i("INFO", "rbKey: " + message);
 
-        if (message.length() != 0){
-            //myToolbar.setTitle(message);
-            WebProxy myTask = new WebProxy(this, "section");
+        if(((Helper) this.getApplication()).getOffline()){
+            WebProxy myTask = new WebProxy(this, "offline");
             myTask.execute("section", message);
+        }else {
+            if (message.length() != 0){
+                //myToolbar.setTitle(message);
+                WebProxy myTask = new WebProxy(this, "section");
+                myTask.execute("section", message);
+            }
         }
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);

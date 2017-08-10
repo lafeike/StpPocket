@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -133,17 +134,28 @@ public class PublicationActivity extends AppCompatActivity {
     }
 
 
+    public void showProgressBar(){
+        progressBar.setVisibility(View.VISIBLE);
+    }
 
+
+    public void hideProgressBar(){
+        progressBar.setVisibility(View.INVISIBLE);
+    }
+
+
+    public void showMessage(String message){
+        Toast toast = Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT );
+        toast.show();
+    }
 
 
     private void showTopic(String acronym, String title){
         Intent intent = new Intent(this, TopicActivity.class);
         String message = getIntent().getStringExtra(MainActivity.EXTRA_MESSAGE);
-        Log.i("showTopic", "title = " + title + ", message = " + message);
         intent.putExtra(EXTRA_MESSAGE, acronym);
 
         intent.putExtra("TABLE_HEADER", title);
-        Log.i("showTopic", "will start activity topic.");
         startActivity(intent);
     }
 
@@ -190,8 +202,6 @@ public class PublicationActivity extends AppCompatActivity {
             if(response == null) {
                 response = "There was an error.";
             }
-            //progressBar.setVisibility(View.GONE);
-            Log.i("INFO", response);
             buildTable(response);
         }
     }

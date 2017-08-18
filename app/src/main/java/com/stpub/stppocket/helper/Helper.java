@@ -2,6 +2,9 @@ package com.stpub.stppocket.helper;
 
 import android.app.Application;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by i-worx on 2017-07-14.
  */
@@ -9,6 +12,8 @@ import android.app.Application;
 public class Helper extends Application {
     private String userId;
     private boolean offline = false; // A flag to indicate whether the user chose browsing offline or not.
+    private List<String> stateList = new ArrayList<String>();
+    private Integer stateSelected = 0;
 
 
     public String getUserId(){
@@ -28,5 +33,24 @@ public class Helper extends Application {
 
     public void setOffline(boolean offline){
         this.offline = offline;
+    }
+
+    public void setStates(List<String> states){
+        this.stateList = states;
+    }
+
+
+    public List<String> getStates(){
+        return stateList;
+    }
+
+
+    public void setStateSelected(Integer i){
+        stateSelected = i;
+    }
+
+
+    public Integer getStateSelected(){
+        return stateSelected;
     }
 }

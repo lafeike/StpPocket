@@ -3,7 +3,7 @@
     <string name="email_placeholder">Your Email</string>
     <string name="password_placeholder">Password</string>
     <string name="login_slogan">The STP Pocket Reference puts your EH&amp;S content at your finger tips.</string>
-    <string name="URL_END_POINT">http://10.1.48.195:9001/api/</string>
+    <string name="URL_END_POINT">http://stponline.stpub.com/appmobile/api/</string>
     <string name="publication_title">Select a publication below</string>
     <string name="publication_toolbar">POCKET REFERENCE</string>
     <string name="topic_toolbar">Topic</string>

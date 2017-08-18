@@ -7,4 +7,7 @@
 
     <color name="table_header_text">#CCFFFFFF</color>
     <color name="table_data_row">#11C5CAE9</color>
+
+    <color name="color_purple">#343896</color>
+    <color name="color_orange">#ED9022</color>
 </resources>

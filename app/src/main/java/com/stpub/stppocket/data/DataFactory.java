@@ -2,6 +2,8 @@ package com.stpub.stppocket.data;
 
 import android.util.Log;
 
+import com.stpub.stppocket.helper.Helper;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -54,11 +56,63 @@ public final class DataFactory {
         return p;
     }
 
+    // Extract topic from JSON and save the state list.
+    // to parse the response from: /api/Topics?acronym=OF&userid=8191
+    public  List<TableData> extractTopic(String jsonData) throws JSONException {
+        final JSONObject jsonObject = new JSONObject(jsonData);
+        JSONArray jsonArray = jsonObject.getJSONArray("tp");
+
+        return parseTableData(jsonArray, "topic");
+    }
+
+
+    public List<String> extractStates(String jsonData) throws JSONException {
+        final JSONObject jsonObject = new JSONObject(jsonData);
+        List<String> state = new ArrayList<>();
+
+        JSONObject jsonPub = jsonObject.getJSONObject("pb");
+        JSONArray jsonStates = null;
+
+        if (jsonPub != null){
+            if(!jsonPub.isNull("state")) {
+                jsonStates = jsonPub.getJSONArray("state");
+                state.add("None");
+
+                for (int i = 0; i < jsonStates.length(); i++) {
+                    state.add(jsonStates.getString(i));
+                }
+            }
+        }
+
+        return state;
+    }
+
+
+    private static List<TableData> parseTableData(JSONArray jsonArray, String urlType) throws  JSONException{
+        final List<TableData> tableData = new ArrayList<>();
+        if(jsonArray == null)
+            return null;
+        final int n = jsonArray.length();
+
+        String columnShow = getColumnName(urlType).get("showColumn");
+        String columnHide = getColumnName(urlType).get("hideColumn");
+        String parentKeyName = getColumnName(urlType).get("parentKeyName");
+        Log.i("DataFactory", "columnShow: " + columnShow);
+
+        for (int i=0; i<n; i++){
+            final JSONObject j = jsonArray.getJSONObject(i);
+            TableData t = new TableData(j.getString(columnShow), j.getInt(columnHide));
+            t.setParentKey(j.getString(parentKeyName));
+            tableData.add(t);
+        }
+
+        return tableData;
+
+    }
+
 
     public static List<TableData> extractTable(String jsonData, String urlType) throws JSONException {
         final JSONObject jsonObject = new JSONObject(jsonData);
-        final List<TableData> tableData = new ArrayList<>();
-        JSONObject json;
         JSONArray jsonArray;
         Log.i("DataFactory", "urlType = " + urlType);
         switch (urlType){
@@ -78,22 +132,7 @@ public final class DataFactory {
                 jsonArray = null;
         }
 
-        final int n = jsonArray.length();
-        Log.i("DataFactory", "get json object tp: " + n);
-
-        String columnShow = getColumnName(urlType).get("showColumn");
-        String columnHide = getColumnName(urlType).get("hideColumn");
-        String parentKeyName = getColumnName(urlType).get("parentKeyName");
-        Log.i("DataFactory", "columnShow: " + columnShow);
-
-        for (int i=0; i<n; i++){
-            final JSONObject j = jsonArray.getJSONObject(i);
-            TableData t = new TableData(j.getString(columnShow), j.getInt(columnHide));
-            t.setParentKey(j.getString(parentKeyName));
-            tableData.add(t);
-        }
-
-        return tableData;
+        return parseTableData(jsonArray, urlType);
     }
 
 
@@ -159,7 +198,7 @@ public final class DataFactory {
 
             tableData.add(paragraph);
         }
-
+        //Log.d("DataFatcory", "create Para List: " + tableData.size());
         return tableData;
     }
 

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dropdownlayout"
+    android:layout_width="wrap_content"
+    android:layout_height="fill_parent">
+
+    <CheckBox
+        android:id="@+id/checkboxInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="10dp"
+        android:clickable="false"/>
+
+    <TextView
+        android:id="@+id/selectStates"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#000"
+        android:layout_gravity="center_vertical"
+        />
+
+
+
+</LinearLayout>

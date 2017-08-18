@@ -227,6 +227,9 @@ public class WebProxy extends AsyncTask<String, String, String> {
                 MyTableDataAdapter tableDataAdapter;
                 if (busType.equals("paragraph")){
                     tableDataAdapter = new ParaTableDataAdapter(context, dataFactory.createParaList(jsonData), myTableView);
+                } else if (busType.equals("topic")){
+                    tableDataAdapter = new MyTableDataAdapter(context, dataFactory.extractTopic(jsonData), myTableView);
+                    ((Helper)activity.getApplication()).setStates(dataFactory.extractStates(jsonData));
                 } else {
                     tableDataAdapter = new MyTableDataAdapter(context, dataFactory.createTableList(jsonData), myTableView);
                 }

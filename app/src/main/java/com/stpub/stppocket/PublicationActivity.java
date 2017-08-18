@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
+import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.TableLayout;
 import android.widget.Toast;
@@ -48,10 +50,8 @@ public class PublicationActivity extends AppCompatActivity {
     public static final String EXTRA_MESSAGE = "EXTRA_MESSAGE";
     public static final String TABLE_HEADER = "TABLE_HEADER"; // Publication title selected will show on the table header of Topic.
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i("DEBUG", "PublicationActivity started.");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_publication);
 
@@ -60,21 +60,24 @@ public class PublicationActivity extends AppCompatActivity {
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
 
+
         Intent intent = getIntent();
         String message = intent.getStringExtra(MainActivity.EXTRA_MESSAGE);
+
         if(message.equals("offline")){ // User clicked 'Browse Offline' button, display the downloaded publications.
             buildTable();
         } else {
             ((Helper) this.getApplication()).setUserId(String.valueOf(message));
 
             if (message.length() != 0){
-                //myToolbar.setTitle(message);
-                //setSupportActionBar(myToolbar);
                 CallWebApi myTask = new CallWebApi();
                 myTask.execute(message);
             }
         }
+
+
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu){
@@ -152,9 +155,7 @@ public class PublicationActivity extends AppCompatActivity {
 
     private void showTopic(String acronym, String title){
         Intent intent = new Intent(this, TopicActivity.class);
-        String message = getIntent().getStringExtra(MainActivity.EXTRA_MESSAGE);
         intent.putExtra(EXTRA_MESSAGE, acronym);
-
         intent.putExtra("TABLE_HEADER", title);
         startActivity(intent);
     }

@@ -4,13 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.stpub.stppocket.ParagraphActivity">
+    tools:context="com.stpub.stppocket.PublicationActivity">
 
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/my_toolbar"
         layout="@layout/app_bar"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/colorPrimary"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -23,6 +23,7 @@
             android:id="@+id/toolbar_title"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:fontFamily="@font/myriad_pro_regular"
             android:gravity="center"
             android:text="@string/publication_toolbar"
             android:textColor="@android:color/white" />
@@ -31,12 +32,16 @@
     <com.stpub.stppocket.StpTableView xmlns:table="http://schemas.android.com/apk/res-auto"
         android:id="@+id/tableView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/myriad_pro_regular"
+        table:layout_constraintBottom_toBottomOf="parent"
         table:layout_constraintLeft_toLeftOf="parent"
         table:layout_constraintRight_toRightOf="parent"
         table:layout_constraintTop_toBottomOf="@+id/my_toolbar"
         table:tableView_columnCount="1"
         table:tableView_headerColor="@android:color/black" />
+
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyle"

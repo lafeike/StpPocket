@@ -8,7 +8,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -66,9 +68,9 @@ public final class DataFactory {
     }
 
 
-    public List<String> extractStates(String jsonData) throws JSONException {
+    public ArrayList<String> extractStates(String jsonData) throws JSONException {
         final JSONObject jsonObject = new JSONObject(jsonData);
-        List<String> state = new ArrayList<>();
+        ArrayList<String> state = new ArrayList<>();
 
         JSONObject jsonPub = jsonObject.getJSONObject("pb");
         JSONArray jsonStates = null;
@@ -182,6 +184,17 @@ public final class DataFactory {
         final int n = jsonArray.length();
         final List<TableData> tableData = new ArrayList<>();
 
+        Map<String, String> mapSdType = new HashMap<String, String>(){
+            {
+                put("Auditable_Partial", "Audit");
+                put("Auditable_Full", "Audit");
+                put("Applicability", "Applicability");
+                put("ExternalRef", "External");
+                put("GeneralInfo", "Info");
+            }
+        };
+
+
         // Add a placeholder in the first row. The first row in the table view will display
         // the details of the selected row, so we put an extra row in the array
         // to render the table view correctly.
@@ -190,11 +203,17 @@ public final class DataFactory {
 
         for (int i = 0; i < n; i++){
             final JSONObject jsonObject = jsonArray.getJSONObject(i);
+
             paragraph = new Paragraph(jsonObject.getString("citation"), jsonObject.getInt("paraKey"));
             paragraph.setSectionKey(jsonObject.getInt("sectionKey"));
             paragraph.setGuideNote(jsonObject.getString("guideNote"));
             paragraph.setParaNum(jsonObject.getString("paraNum"));
-            paragraph.setQuestion(jsonObject.getString("question"));
+
+            if(mapSdType.containsKey(jsonObject.getString("question"))){
+                paragraph.setQuestion(mapSdType.get(jsonObject.getString("question")));
+            } else {
+                paragraph.setQuestion(jsonObject.getString("question"));
+            }
 
             tableData.add(paragraph);
         }

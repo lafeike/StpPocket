@@ -1,9 +1,14 @@
 package com.stpub.stppocket.data;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.stpub.stppocket.R;
 
 import java.util.List;
 
@@ -15,7 +20,8 @@ import de.codecrafters.tableview.toolkit.LongPressAwareTableDataAdapter;
  */
 
 public class MyTableDataAdapter extends LongPressAwareTableDataAdapter<TableData> {
-    private static final int TEXT_SIZE = 14;
+    private static final int TEXT_SIZE = 15;
+    public int rowClicked = 0;
 
 
     public MyTableDataAdapter(final Context context, final List<TableData> data, final TableView<TableData> tableView){
@@ -28,7 +34,13 @@ public class MyTableDataAdapter extends LongPressAwareTableDataAdapter<TableData
         final  TableData tableData = getRowData(rowIndex);
         View renderedView = null;
 
-        renderedView = renderString(tableData.getTitle());
+        renderedView = renderString(tableData.getTitle(), false);
+        rowClicked = getRowClicked();
+
+        Log.i("Adapter", "row clicked = " + rowClicked);
+        if(rowIndex != 0 && rowIndex == rowClicked){
+            renderedView.setBackgroundColor(Color.YELLOW);
+        }
 
         return renderedView;
     }
@@ -38,6 +50,8 @@ public class MyTableDataAdapter extends LongPressAwareTableDataAdapter<TableData
     public View getLongPressCellView(int rowIndex, int columnIndex, ViewGroup parentView){
         final TableData tableData = getRowData(rowIndex);
         View renderedView = null;
+
+        Log.i("Adapter", "long press.");
 
         switch (columnIndex){
             case 0:
@@ -52,15 +66,33 @@ public class MyTableDataAdapter extends LongPressAwareTableDataAdapter<TableData
 
 
     private View renderTitle(final TableData tableData){
-        return renderString(tableData.getTitle());
+        return renderString(tableData.getTitle(), false);
+    }
+
+    // if it is state difference, display it it in different color.
+    public View renderString(final String value, boolean isStateDiff){
+        final TextView textView = new TextView(getContext());
+        textView.setText(value);
+        textView.setPadding(20, 25, 20, 25);
+        textView.setTextSize(TEXT_SIZE);
+
+        if(isStateDiff){
+            textView.setTextColor(Color.BLACK);
+        }
+
+        return textView;
     }
 
 
-    public View renderString(final String value){
-        final TextView textView = new TextView(getContext());
-        textView.setText(value);
-        textView.setPadding(20, 10, 20, 10);
-        textView.setTextSize(TEXT_SIZE);
-        return textView;
+
+
+    public void setRowClicked(final int rowIndex){
+        this.rowClicked = rowIndex;
+        Log.i("Adapter", "clicked row: " + rowIndex);
+    }
+
+
+    public int getRowClicked(){
+        return rowClicked;
     }
 }

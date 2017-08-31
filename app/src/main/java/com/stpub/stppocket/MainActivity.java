@@ -10,6 +10,8 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.ThemedSpinnerAdapter;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
@@ -96,6 +98,54 @@ public class MainActivity extends AppCompatActivity implements
 
         username = (EditText) findViewById(R.id.etUserName);
         password = (EditText) findViewById(R.id.etPassword);
+
+        username.setOnFocusChangeListener(new View.OnFocusChangeListener(){
+            @Override
+            public void onFocusChange(View v, boolean hasFocus){
+              if(!hasFocus){
+                  if (username.getText().length() == 0 || password.getText().length() == 0){
+                      btnLogin.setEnabled(false);
+                  } else {
+                      btnLogin.setEnabled(true);
+                  }
+              }
+            }
+        });
+
+        password.setOnFocusChangeListener(new View.OnFocusChangeListener(){
+            @Override
+            public void onFocusChange(View v, boolean hasFocus){
+                if(!hasFocus){
+                    if (username.getText().length() != 0 && password.getText().length() != 0){
+                        btnLogin.setEnabled(true);
+                    } else {
+                        btnLogin.setEnabled(false);
+                    }
+                }
+            }
+        });
+
+        username.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if(username.getText().length() != 0 && password.getText().length() != 0){
+                    btnLogin.setEnabled(true);
+                } else {
+                    btnLogin.setEnabled(false);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
         btnLogin = (Button) findViewById(R.id.btnLogin);
@@ -217,8 +267,9 @@ public class MainActivity extends AppCompatActivity implements
         } else {
             // Email/password account
             String status = String.format("Signed in as %s", credential.getId());
-            ((TextView)findViewById(R.id.etUserName)).setText(credential.getId());
-            ((TextView)findViewById(R.id.etPassword)).setText(credential.getPassword());
+            username.setText(credential.getId());
+            password.setText(credential.getPassword());
+            btnLogin.setEnabled(true);
         }
     }
 
@@ -491,7 +542,5 @@ public class MainActivity extends AppCompatActivity implements
                 this.error = error;
             }
         }
-
-
     }
 }

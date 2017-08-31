@@ -74,18 +74,16 @@ public class PublicationActivity extends AppCompatActivity {
                 myTask.execute(message);
             }
         }
-
-
     }
 
-
+/*
     @Override
     public boolean onCreateOptionsMenu(Menu menu){
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu, menu);
         return true;
     }
-
+*/
 
     private class PublicationClickListener implements TableDataClickListener<Publication>{
 

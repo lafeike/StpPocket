@@ -239,10 +239,14 @@ public class DBHandler extends SQLiteOpenHelper {
         if(cursor != null){
             cursor.moveToFirst();
         }
-        Publication pub = new Publication(cursor.getString(0), cursor.getString(1));
-        pub.setPid(cursor.getInt(2));
-
-        return pub;
+        Log.i("DBHandler", "acronym = " + acronym + ", pub: " + cursor.getCount());
+        if (cursor.getCount() == 0){
+            return null;
+        } else {
+            Publication pub = new Publication(cursor.getString(0), cursor.getString(1));
+            pub.setPid(cursor.getInt(2));
+            return pub;
+        }
     }
 
 

@@ -13,6 +13,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
@@ -34,6 +37,9 @@ public class RulebookActivity extends AppCompatActivity {
     public static final String TABLE_HEADER = "TABLE_HEADER";
     PopupWindow popupWindow;
 
+    private View currentSelectedView;
+    private Boolean firstTimeStartup = true;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,28 +50,26 @@ public class RulebookActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         String message = intent.getStringExtra(EXTRA_MESSAGE);
-        Log.i("INFO", "TopicKey: " + message);
 
-        if(((Helper) this.getApplication()).getOffline()){
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setVisibility(View.GONE);
+
+        boolean isOffline = ((Helper) this.getApplication()).getOffline();
+        if(isOffline){
             WebProxy myTask = new WebProxy(this, "offline");
             myTask.execute("rulebook", message);
         } else {
             if (message.length() != 0){
-                //myToolbar.setTitle(message);
-
                 WebProxy myTask = new WebProxy(this, "rulebook");
                 myTask.execute("rulebook", message);
             }
-        }
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        if(getStatesCount() > 1){
-            fab.setVisibility(View.VISIBLE);
-        } else {
-            fab.setVisibility(View.GONE);
-        }
+            if(((Helper) this.getApplication()).getStatesCount() > 1){
+                fab.setVisibility(View.VISIBLE);
+            }
 
-        fab.setOnClickListener(showPopupWindow());
+            fab.setOnClickListener(showPopupWindow());
+        }
     }
 
 
@@ -83,7 +87,7 @@ public class RulebookActivity extends AppCompatActivity {
         LayoutInflater inflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
         //get the pop-up window i.e.  drop-down layout
-        LinearLayout layoutInfoType = (LinearLayout)inflater.inflate(R.layout.popupwindow, (ViewGroup)findViewById(R.id.popupStates));
+        final LinearLayout layoutInfoType = (LinearLayout)inflater.inflate(R.layout.popupwindow, (ViewGroup)findViewById(R.id.popupStates));
         popupWindow = new PopupWindow(layoutInfoType, Toolbar.LayoutParams.WRAP_CONTENT, Toolbar.LayoutParams.WRAP_CONTENT, true);
 
 
@@ -114,46 +118,43 @@ public class RulebookActivity extends AppCompatActivity {
 
         //populate the drop-down list
         final ListView listInfoType = (ListView) layoutInfoType.findViewById(R.id.dropDownStatesList);
-        List<String> arrayList = ((Helper) this.getApplication()).getStates();
-        final Integer selectedState = getState();
-        //ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line, arrayList);
-        List<States> rowItem = new ArrayList<States>();
-        final Integer checkedState = selectedState;
-        for(int i = 0; i < arrayList.size(); i++){
-            States st = new States(arrayList.get(i));
-            if( i == selectedState) {
-                st.setSelected(true);
-                Log.i("Topic", "No." + i + " is checked.");
-            }
-            rowItem.add(st);
-        }
-        CustomListActivity adapter = new CustomListActivity(this, rowItem);
+        ArrayList<String> arrayList = ((Helper) this.getApplication()).getStates();
+
+        final Integer selectedState = ((Helper) this.getApplication()).getStateSelected();
+        final CustomListAdapter adapter = new CustomListAdapter(this, android.R.layout.simple_list_item_1, arrayList);
 
         listInfoType.setAdapter(adapter);
+        listInfoType.setSelection(selectedState);
+        //layoutInfoType.setSelected(true);
+        Log.i("Section", "set selection: " + selectedState);
 
-        listInfoType.setOnTouchListener(new View.OnTouchListener() {
+        listInfoType.setOnItemClickListener(new AdapterView.OnItemClickListener(){
             @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                Log.i("topic", "touched 2.");
-                if(checkedState != getState()) {
-                    Log.i("topic", "state changed.");
-                    popupWindow.dismiss();
-
-                    return true;
-                } else {
-                    Log.i("topic", "state not change.");
-                    return false;
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id){
+                if(firstTimeStartup){
+                    currentSelectedView = parent.getChildAt(0);
                 }
+                firstTimeStartup = false;
+                if (currentSelectedView !=null && currentSelectedView != view) {
+                    adapter.unhighlightCurrentRow(currentSelectedView);
+                }
+
+                currentSelectedView = view;
+                adapter.highlightCurrentRow(currentSelectedView);
+
+                Animation animation = new AlphaAnimation(0.3f, 1.0f);
+                animation.setDuration(4000);
+                view.startAnimation(animation);
+                setStateSelected(position);
+                adapter.setState(position);
+
+                popupWindow.dismiss();
             }
         });
     }
 
-    private Integer getState(){
-        return ((Helper) this.getApplication()).getStateSelected();
-    }
-
-
-    private Integer getStatesCount(){
-        return ((Helper) this.getApplication()).getStates().size();
+    // Set global variable 'stateSelected' - to show state difference later.
+    public void setStateSelected(Integer i){
+        ((Helper) this.getApplication()).setStateSelected(i);
     }
 }

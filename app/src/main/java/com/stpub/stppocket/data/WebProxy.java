@@ -3,6 +3,8 @@ package com.stpub.stppocket.data;
 import android.app.Activity;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.content.Intent;
 import android.util.Log;
@@ -29,8 +31,10 @@ import java.net.URL;
 import java.util.LinkedList;
 
 import de.codecrafters.tableview.listeners.TableDataClickListener;
+import de.codecrafters.tableview.providers.TableDataRowBackgroundProvider;
 
 import static com.stpub.stppocket.R.id.progressBar;
+import static java.security.AccessController.getContext;
 
 /**
  * Created by i-worx on 2017-07-13.
@@ -66,7 +70,7 @@ public class WebProxy extends AsyncTask<String, String, String> {
             String busType = args[0];
             String para1 = args[1];
 
-            Log.i("WebProxy", "doInBackground: busType =" + busType + ", para1 = " + para1);
+            Log.i(TAG, "doInBackground: busType =" + busType + ", para1 = " + para1);
 
             if(urlType.equals("offline")){
                 buildTableFromDb(busType, para1);
@@ -122,7 +126,14 @@ public class WebProxy extends AsyncTask<String, String, String> {
                 result = "Section?rbKey=" + value1;
                 break;
             case "paragraph":
-                result = "Para?SectionKey=" + value1;
+                int state = ((Helper) context.getApplicationContext()).getStateSelected();
+                if( state == 0){
+                    result = "Para?SectionKey=" + value1;
+                } else {
+                    String sb = ((Helper) context.getApplicationContext()).getStates().get(state).replace(" ", "%20");
+                    result = "ParaController/" + value1 + "/" + sb;
+                }
+
                 break;
             case "download":
                 result = "PublicationsController/" + value1 + "/" + value2;
@@ -140,7 +151,7 @@ public class WebProxy extends AsyncTask<String, String, String> {
         public void onDataClicked(final int rowIndex, final TableData clickedData){
             Activity activity = (Activity) context;
             String activityName = activity.getClass().getName();
-            Log.d("onDataClick", "rowIndex = " + rowIndex );
+
             // Paragraph row was clicked, just refresh the table view;
             // Otherwise arouse a new activity to display.
             if(activityName.contains("ParagraphActivity")){
@@ -154,7 +165,8 @@ public class WebProxy extends AsyncTask<String, String, String> {
                     // Replace the first row with the click row.
                     tableDataAdapter.remove(tableDataAdapter.getItem(0));
                     tableDataAdapter.insert(clickedData, 0);
-                    Log.d("onDataClick", "count = " + tableDataAdapter.getCount() );
+                    tableDataAdapter.setRowClicked(rowIndex);
+
                     tableDataAdapter.notifyDataSetChanged();
                 }
             } else {
@@ -227,6 +239,7 @@ public class WebProxy extends AsyncTask<String, String, String> {
                 MyTableDataAdapter tableDataAdapter;
                 if (busType.equals("paragraph")){
                     tableDataAdapter = new ParaTableDataAdapter(context, dataFactory.createParaList(jsonData), myTableView);
+                    myTableView.setDataRowBackgroundProvider(new ParaRowColorProvider());
                 } else if (busType.equals("topic")){
                     tableDataAdapter = new MyTableDataAdapter(context, dataFactory.extractTopic(jsonData), myTableView);
                     ((Helper)activity.getApplication()).setStates(dataFactory.extractStates(jsonData));
@@ -235,10 +248,24 @@ public class WebProxy extends AsyncTask<String, String, String> {
                 }
                 myTableView.addDataClickListener(new MyTableClickListener());
                 myTableView.setDataAdapter(tableDataAdapter);
+
             } catch (JSONException e){
                 Log.e("buildTable", e.getMessage());
                 e.printStackTrace();
             }
+        }
+    }
+
+    private static class ParaRowColorProvider implements TableDataRowBackgroundProvider<Paragraph> {
+        @Override
+        public Drawable getRowBackground(final  int rowIndex, final Paragraph paragraph){
+            int rowColor = R.color.color_orange;
+
+            if(rowIndex > 2){
+                rowColor = R.color.color_purple;
+            }
+
+            return new ColorDrawable(rowColor);
         }
     }
 

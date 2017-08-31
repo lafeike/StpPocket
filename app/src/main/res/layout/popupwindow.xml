@@ -11,8 +11,9 @@
         android:id="@+id/dropDownStatesList"
         android:layout_width="160dp"
         android:layout_height="wrap_content"
-        android:background="@android:color/white"
-        android:cacheColorHint="@color/color_orange"
+        android:background="@drawable/border_ui"
+        android:drawSelectorOnTop="false"
+        android:listSelector="@color/color_orange"
         android:divider="#000"
         android:dividerHeight="0.5dp">
     </ListView>

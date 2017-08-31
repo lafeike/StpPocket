@@ -12,7 +12,7 @@ import java.util.List;
 public class Helper extends Application {
     private String userId;
     private boolean offline = false; // A flag to indicate whether the user chose browsing offline or not.
-    private List<String> stateList = new ArrayList<String>();
+    private ArrayList<String> stateList = new ArrayList<String>();
     private Integer stateSelected = 0;
 
 
@@ -35,12 +35,12 @@ public class Helper extends Application {
         this.offline = offline;
     }
 
-    public void setStates(List<String> states){
+    public void setStates(ArrayList<String> states){
         this.stateList = states;
     }
 
 
-    public List<String> getStates(){
+    public ArrayList<String> getStates(){
         return stateList;
     }
 
@@ -52,5 +52,9 @@ public class Helper extends Application {
 
     public Integer getStateSelected(){
         return stateSelected;
+    }
+
+    public Integer getStatesCount(){
+        return stateList.size();
     }
 }

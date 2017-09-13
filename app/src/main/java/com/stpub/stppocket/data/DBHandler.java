@@ -11,7 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by i-worx on 2017-07-28.
+ * Created by Rafy on 2017-07-28.
+ * Methods to access the SQLite.
  */
 
 public class DBHandler extends SQLiteOpenHelper {
@@ -29,9 +30,21 @@ public class DBHandler extends SQLiteOpenHelper {
     private static final String TABLE_SECTION = "section";
     private static final String TABLE_PARAGRAPH = "paragraph";
 
+    private static DBHandler dbInstance = null;
 
-    public DBHandler(Context context){
+
+    private DBHandler(Context context){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+
+    // use  DBHandler.getInstance(context)
+    // as it guarantees that only one database helper will exist across the entire application's lifecycle.
+    public static DBHandler getInstance(Context ctx){
+        if(dbInstance == null){
+            dbInstance = new DBHandler(ctx.getApplicationContext());
+        }
+        return dbInstance;
     }
 
 
@@ -79,11 +92,11 @@ public class DBHandler extends SQLiteOpenHelper {
     }
 
 
-    public void addPublication(SQLiteDatabase db, Publication publication){
-        deletePublication(db, publication.getAcronym());
+    void addPublication(SQLiteDatabase db, TableData publication){
+        deletePublication(db, publication.getKey());
 
         ContentValues values = new ContentValues();
-        values.put(KEY_ACRONYM, publication.getAcronym());
+        values.put(KEY_ACRONYM, publication.getKey());
         values.put(KEY_PID, publication.getPid());
         values.put(KEY_TITLE, publication.getTitle());
 
@@ -91,7 +104,7 @@ public class DBHandler extends SQLiteOpenHelper {
     }
 
 
-    public void deletePublication(SQLiteDatabase db, String acronym){
+    private void deletePublication(SQLiteDatabase db, String acronym){
         Cursor cTopic = db.rawQuery("select topic_key from topic where acronym='" + acronym + "'", null);
         if (cTopic.moveToFirst()){
             do {
@@ -108,18 +121,21 @@ public class DBHandler extends SQLiteOpenHelper {
                             } while (cSection.moveToNext());
                         }
                         db.delete(TABLE_SECTION, "rb_key=?", new String[]{String.valueOf(rbKey)});
+                        cSection.close();
                     } while (cRulebook.moveToNext());
                 }
                 db.delete(TABLE_RULEBOOK, "topic_key=?", new String[]{String.valueOf(topicKey)});
+                cRulebook.close();
             }while (cTopic.moveToNext());
             db.delete(TABLE_TOPIC, "acronym=?", new String[]{acronym});
         }
 
+        cTopic.close();
         db.delete(TABLE_PUBLICATION, "acronym=?", new String[]{acronym});
     }
 
 
-    public void addTable(SQLiteDatabase db, List<TableData> tableData, String tableName){
+    void addTable(SQLiteDatabase db, List<TableData> tableData, String tableName){
         ContentValues values = new ContentValues();
         String[] cName = getTableColumn(tableName);
 
@@ -132,7 +148,7 @@ public class DBHandler extends SQLiteOpenHelper {
     }
 
 
-    public void addParagraph(SQLiteDatabase db, List<Paragraph> paragraphs){
+    void addParagraph(SQLiteDatabase db, List<Paragraph> paragraphs){
         ContentValues values = new ContentValues();
         for(int i = 0; i < paragraphs.size(); i++) {
             values.put("para_key", paragraphs.get(i).getKey());
@@ -146,20 +162,20 @@ public class DBHandler extends SQLiteOpenHelper {
     }
 
 
-    public List<TableData> getTableData(SQLiteDatabase db, String tableName, String value){
+     List<TableData> getTableData(SQLiteDatabase db, String tableName, String value){
         List<TableData> tableDataList = new ArrayList<>();
-
         Cursor cursor = db.query(tableName, getTableColumn(tableName),
                 queryKey(tableName) + "=?", new String[]{value}, null, null, null, null);
         if(cursor.moveToFirst()){
             do {
-                TableData t = new TableData(cursor.getString(0), cursor.getInt(1));
+                TableData t = new TableData(cursor.getString(0), cursor.getString(1));
                 t.setParentKey(cursor.getString(2));
 
                 tableDataList.add(t);
             } while (cursor.moveToNext());
         }
-
+        cursor.close();
+        Log.i("DB", "get data: " + tableDataList.size());
         return  tableDataList;
     }
 
@@ -171,12 +187,12 @@ public class DBHandler extends SQLiteOpenHelper {
                 new String[]{"para_key", "citation", "section_key", "para_num", "question", "guide_note"},
                 "section_key=?", new String[]{sectionKey},
                 null, null, null, null);
-        Paragraph p = new Paragraph("Mock", 0); // add a placeholder in the first row.
+        Paragraph p = new Paragraph("Mock", "0"); // add a placeholder in the first row.
         paragraphList.add(p);
 
         if(cursor.moveToFirst()){
             do {
-                Paragraph paragraph = new Paragraph(cursor.getString(1), cursor.getInt(0));
+                Paragraph paragraph = new Paragraph(cursor.getString(1), cursor.getString(0));
                 paragraph.setSectionKey(cursor.getInt(2));
                 paragraph.setGuideNote(cursor.getString(5));
                 paragraph.setParaNum(cursor.getString(3));
@@ -184,7 +200,7 @@ public class DBHandler extends SQLiteOpenHelper {
                 paragraphList.add(paragraph);
             } while (cursor.moveToNext());
         }
-
+        cursor.close();
         return paragraphList;
     }
 
@@ -232,37 +248,41 @@ public class DBHandler extends SQLiteOpenHelper {
     }
 
 
-    public Publication getPublication(SQLiteDatabase db, String acronym){
+    TableData getPublication(SQLiteDatabase db, String acronym){
         //SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.query(TABLE_PUBLICATION, new String[] {KEY_ACRONYM, KEY_TITLE, KEY_PID},
                 KEY_ACRONYM + "=?", new String[]{acronym}, null, null, null, null);
         if(cursor != null){
             cursor.moveToFirst();
+        } else {
+            return null;
         }
-        Log.i("DBHandler", "acronym = " + acronym + ", pub: " + cursor.getCount());
+        //Log.i("DBHandler", "acronym = " + acronym + ", pub: " + cursor.getCount());
         if (cursor.getCount() == 0){
+            cursor.close();
             return null;
         } else {
-            Publication pub = new Publication(cursor.getString(0), cursor.getString(1));
+            TableData pub = new TableData(cursor.getString(1), cursor.getString(0) );
             pub.setPid(cursor.getInt(2));
+            cursor.close();
             return pub;
         }
     }
 
 
-    public List<Publication> getAllPublications(SQLiteDatabase db){
-        List<Publication> pubList = new ArrayList<Publication>();
+    public List<TableData> getAllPublications(SQLiteDatabase db){
+        List<TableData> pubList = new ArrayList<TableData>();
         String selectQuery = "select acronym,title,pid from " + TABLE_PUBLICATION;
-        //SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
 
         if(cursor.moveToFirst()){
             do {
-                Publication pub = new Publication(cursor.getString(0), cursor.getString(1));
+                TableData pub = new TableData(cursor.getString(1), cursor.getString(0));
                 pub.setPid(cursor.getInt(2));
                 pubList.add(pub);
             } while (cursor.moveToNext());
         }
+        cursor.close();
 
         return pubList;
     }

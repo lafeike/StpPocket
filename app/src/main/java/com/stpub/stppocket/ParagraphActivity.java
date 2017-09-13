@@ -172,7 +172,7 @@ public class ParagraphActivity extends AppCompatActivity {
         final StpTableView stpTableView = (StpTableView) findViewById(R.id.tableView);
 
         if(stpTableView != null){
-            DBHandler db = new DBHandler(this);
+            DBHandler db = DBHandler.getInstance(this);
             try {
                 SQLiteDatabase stpDb = db.getReadableDatabase();
                 MyTableDataAdapter tableDataAdapter = new ParaTableDataAdapter(this, db.getParagraph(stpDb, value), stpTableView);
@@ -198,7 +198,7 @@ public class ParagraphActivity extends AppCompatActivity {
                 // Ignore it if the first row is clicked.
             } else {
                 // Needs to refresh the table.
-                final StpTableView myTableView = (StpTableView) findViewById(R.id.tableView);
+                final StpTableView myTableView = findViewById(R.id.tableView);
                 ParaTableDataAdapter tableDataAdapter = (ParaTableDataAdapter) myTableView.getDataAdapter();
 
                 // Replace the first row with the click row.

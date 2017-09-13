@@ -2,19 +2,18 @@ package com.stpub.stppocket.data;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.content.Intent;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import com.stpub.stppocket.ParagraphActivity;
 import com.stpub.stppocket.PublicationActivity;
-import com.stpub.stppocket.PublicationTableDataAdapter;
 import com.stpub.stppocket.R;
 import com.stpub.stppocket.RulebookActivity;
 import com.stpub.stppocket.SectionActivity;
@@ -31,50 +30,44 @@ import java.net.URL;
 import java.util.LinkedList;
 
 import de.codecrafters.tableview.listeners.TableDataClickListener;
-import de.codecrafters.tableview.providers.TableDataRowBackgroundProvider;
-
-import static com.stpub.stppocket.R.id.progressBar;
-import static java.security.AccessController.getContext;
+import de.codecrafters.tableview.listeners.TableDataLongClickListener;
 
 /**
- * Created by i-worx on 2017-07-13.
+ * Created by Rafy on 2017-07-13.
+ * Call the web api and refresh the UI with data from the server.
  */
 
-public class WebProxy extends AsyncTask<String, String, String> {
+public class WebProxy extends AsyncTask<String, String, WebProxy.AsyncTaskResult<String>> {
     public Context context;
 
-    public String urlType;
-    public String tableHeaderText;
-    private  Exception exception;
+    private String urlType;
+    private String tableHeaderText;
 
     ProgressBar progressBar;
 
-    public static final String EXTRA_MESSAGE = "EXTRA_MESSAGE";
-    public static final String TABLE_HEADER = "TABLE_HEADER";
-    public static final String TAG = "WebProxy";
+    private static final String EXTRA_MESSAGE = "EXTRA_MESSAGE";
+    private static final String TABLE_HEADER = "TABLE_HEADER";
+    private static final String TAG = "WebProxy";
 
     public WebProxy(Context context, String urlType){
         this.context = context;
         this.urlType = urlType;
-
     }
 
     protected void onPreExecute() {// needs to change here.
 
     }
 
-    protected String doInBackground(String... args){
+    protected AsyncTaskResult<String> doInBackground(String... args){
         try {
             String URL_END_POINT = context.getString(R.string.URL_END_POINT);
             int count = args.length;
             String busType = args[0];
             String para1 = args[1];
 
-            Log.i(TAG, "doInBackground: busType =" + busType + ", para1 = " + para1);
-
             if(urlType.equals("offline")){
                 buildTableFromDb(busType, para1);
-                return null;
+                return new AsyncTaskResult<String>("");
             } else {
                 URL url;
                 if (count == 2){
@@ -93,7 +86,12 @@ public class WebProxy extends AsyncTask<String, String, String> {
                         stringBuilder.append(line).append("\n");
                     }
                     bufferedReader.close();
-                    return stringBuilder.toString();
+                    return new AsyncTaskResult<String>(stringBuilder.toString());
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                    Log.e("ERROR", e.getMessage(), e);
+                    return new AsyncTaskResult<String>(e);
                 }
                 finally {
                     httpURLConnection.disconnect();
@@ -104,7 +102,7 @@ public class WebProxy extends AsyncTask<String, String, String> {
         {
             e.printStackTrace();
             Log.e("ERROR", e.getMessage(), e);
-            return null;
+            return new AsyncTaskResult<String>(e);
         }
     }
 
@@ -145,6 +143,30 @@ public class WebProxy extends AsyncTask<String, String, String> {
     }
 
 
+    protected class AsyncTaskResult<String> {
+        private String result;
+        private Exception error;
+
+        public String getResult() {
+            return result;
+        }
+
+        public Exception getError() {
+            return error;
+        }
+
+        public AsyncTaskResult(String result) {
+            super();
+            this.result = result;
+        }
+
+        public AsyncTaskResult(Exception error) {
+            super();
+            this.error = error;
+        }
+    }
+
+
     private class MyTableClickListener implements TableDataClickListener<TableData> {
 
         @Override
@@ -171,8 +193,7 @@ public class WebProxy extends AsyncTask<String, String, String> {
                 }
             } else {
                 Intent intent = getLinkedIntent(activityName);
-
-                intent.putExtra(EXTRA_MESSAGE, "" + clickedData.getKey());
+                intent.putExtra(EXTRA_MESSAGE, clickedData.getKey());
                 intent.putExtra(TABLE_HEADER, clickedData.getTitle());
                 context.startActivity(intent);
             }
@@ -201,12 +222,11 @@ public class WebProxy extends AsyncTask<String, String, String> {
 
 
     private void buildTableFromDb(String busType, String value){
-        Log.i("FromDB", "busType=" + busType + " value =" + value);
         Activity activity = (Activity) context;
         final StpTableView stpTableView = (StpTableView) activity.findViewById(R.id.tableView);
-        Log.d("WebProxy", "activity =" + activity.getLocalClassName());
+
         if(stpTableView != null){
-            DBHandler db = new DBHandler(activity);
+            DBHandler db = DBHandler.getInstance(activity);
             try {
 
                 SQLiteDatabase stpDb = db.getReadableDatabase();
@@ -228,26 +248,73 @@ public class WebProxy extends AsyncTask<String, String, String> {
         }
     }
 
+    public class PublicationLongClickListener implements TableDataLongClickListener<TableData> {
+
+        @Override
+        public boolean onDataLongClicked(int rowIndex, final TableData clickedData){
+
+            Activity activity = (Activity) context;
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            progressBar = activity.findViewById(R.id.progressBar);
+            builder.setTitle("Download Publication")
+                    .setMessage("Begin to download " + clickedData.getKey() + "?")
+                    .setPositiveButton( "Yes",
+                            new DialogInterface.OnClickListener(){
+                                public void onClick(DialogInterface dialog, int which){
+                                    progressBar.setVisibility(View.VISIBLE);
+                                    dialog.dismiss();
+                                    downloadPublication(clickedData.getKey());
+                                }
+                            })
+                    .setNegativeButton("Cancel",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which){
+                                    dialog.dismiss();
+                                }
+
+                            }).show();
+
+            return true;
+        }
+
+
+        private void downloadPublication(String acronym){
+            WebProxy myTask = new WebProxy(context, "download");
+            String userId = ((Helper)context.getApplicationContext()).getUserId();
+            myTask.execute("download", acronym, userId);
+        }
+    }
+
+
     private void buildTable(String busType, String jsonData){
         Activity activity = (Activity) context;
-        final StpTableView myTableView = (StpTableView) activity.findViewById(R.id.tableView);
+        final StpTableView myTableView = activity.findViewById(R.id.tableView);
 
         if(myTableView != null){
             try {
-
                 DataFactory dataFactory = new DataFactory(busType);
                 MyTableDataAdapter tableDataAdapter;
-                if (busType.equals("paragraph")){
-                    tableDataAdapter = new ParaTableDataAdapter(context, dataFactory.createParaList(jsonData), myTableView);
-                    myTableView.setDataRowBackgroundProvider(new ParaRowColorProvider());
-                } else if (busType.equals("topic")){
-                    tableDataAdapter = new MyTableDataAdapter(context, dataFactory.extractTopic(jsonData), myTableView);
-                    ((Helper)activity.getApplication()).setStates(dataFactory.extractStates(jsonData));
-                } else {
-                    tableDataAdapter = new MyTableDataAdapter(context, dataFactory.createTableList(jsonData), myTableView);
+
+                switch (busType){
+                    case "paragraph":
+                        tableDataAdapter = new ParaTableDataAdapter(context, dataFactory.createParaList(jsonData), myTableView);
+                        myTableView.setDataAdapter(tableDataAdapter);
+                        break;
+                    case "topic":
+                        tableDataAdapter = new MyTableDataAdapter(context, dataFactory.extractTopic(jsonData), myTableView);
+                        ((Helper)activity.getApplication()).setStates(dataFactory.extractStates(jsonData));
+                        myTableView.setDataAdapter(tableDataAdapter);
+                        break;
+                    case "publication":
+                        myTableView.addDataLongClickListener(new PublicationLongClickListener());
+                        tableDataAdapter = new PublicationTableDataAdapter(context, dataFactory.createTableList(jsonData), myTableView);
+                        myTableView.setDataAdapter(tableDataAdapter);
+                        break;
+                    default:
+                        tableDataAdapter = new MyTableDataAdapter(context, dataFactory.createTableList(jsonData), myTableView);
+                        myTableView.setDataAdapter(tableDataAdapter);
                 }
                 myTableView.addDataClickListener(new MyTableClickListener());
-                myTableView.setDataAdapter(tableDataAdapter);
 
             } catch (JSONException e){
                 Log.e("buildTable", e.getMessage());
@@ -256,35 +323,25 @@ public class WebProxy extends AsyncTask<String, String, String> {
         }
     }
 
-    private static class ParaRowColorProvider implements TableDataRowBackgroundProvider<Paragraph> {
-        @Override
-        public Drawable getRowBackground(final  int rowIndex, final Paragraph paragraph){
-            int rowColor = R.color.color_orange;
 
-            if(rowIndex > 2){
-                rowColor = R.color.color_purple;
-            }
-
-            return new ColorDrawable(rowColor);
-        }
-    }
-
-
-    protected void onPostExecute(String response){
+    protected void onPostExecute(AsyncTaskResult<String> response){
         //progressBar.setVisibility(View.GONE);
         //Log.i("INFO", response);
+        if(response.getError() != null) {
+            Toast.makeText(context, response.getError().getMessage(), Toast.LENGTH_SHORT).show();
+            return;
+        }
         if(urlType.equals("download")){
             // Save data into SQLite.
-            Log.d("DEBUG", "Now start to save publication into SQLite.");
-            DBHandler db = new DBHandler(context);
+            DBHandler db = DBHandler.getInstance(context);
             SQLiteDatabase stpDB = db.getWritableDatabase();
             DataFactory dataFactory = new DataFactory(urlType);
             try {
-                db.addPublication(stpDB, dataFactory.extractPublication(response));
-                db.addTable(stpDB, dataFactory.extractTable(response, "topic"), "topic");
-                db.addTable(stpDB, dataFactory.extractTable(response, "rulebook"), "rulebook");
-                db.addTable(stpDB, dataFactory.extractTable(response, "section"), "section");
-                db.addParagraph(stpDB, dataFactory.extractParagraph(response));
+                db.addPublication(stpDB, dataFactory.extractPublication(response.getResult()));
+                db.addTable(stpDB, dataFactory.extractTable(response.getResult(), "topic"), "topic");
+                db.addTable(stpDB, dataFactory.extractTable(response.getResult(), "rulebook"), "rulebook");
+                db.addTable(stpDB, dataFactory.extractTable(response.getResult(), "section"), "section");
+                db.addParagraph(stpDB, dataFactory.extractParagraph(response.getResult()));
                 PublicationActivity activity = (PublicationActivity) context;
                 activity.hideProgressBar();
                 activity.showMessage("Downloaded successfully.");
@@ -293,7 +350,6 @@ public class WebProxy extends AsyncTask<String, String, String> {
                 Log.e("ERROR", e.getMessage());
             }
             finally {
-                Log.i("WebProxy", "downloaded.");
                 db.close();
             }
         }else if(urlType.equals("offline")) {
@@ -302,8 +358,7 @@ public class WebProxy extends AsyncTask<String, String, String> {
         }
         else{
             // Refresh table view.
-            Log.d("WebProxy", "build table.");
-            buildTable(urlType, response);
+            buildTable(urlType, response.getResult());
         }
 
         return;

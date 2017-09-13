@@ -50,7 +50,7 @@ import java.net.URL;
 import java.util.List;
 
 import com.stpub.stppocket.data.DBHandler;
-import com.stpub.stppocket.data.Publication;
+import com.stpub.stppocket.data.TableData;
 import com.stpub.stppocket.helper.Helper;
 
 import static android.R.attr.handle;
@@ -146,6 +146,28 @@ public class MainActivity extends AppCompatActivity implements
             }
         });
 
+
+        password.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if(username.getText().length() != 0 && password.getText().length() != 0){
+                    btnLogin.setEnabled(true);
+                } else {
+                    btnLogin.setEnabled(false);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
         btnLogin = (Button) findViewById(R.id.btnLogin);
@@ -200,13 +222,12 @@ public class MainActivity extends AppCompatActivity implements
                     public void onResult(@NonNull CredentialRequestResult credentialRequestResult) {
                        // hideProgress();
                         Status status = credentialRequestResult.getStatus();
-                        Log.d(TAG, "credential status:" + status);
+
                         if(status.isSuccess()){
                             // Auto sign-in success
                             handleCredential(credentialRequestResult.getCredential());
                         } else if (status.getStatusCode() == CommonStatusCodes.RESOLUTION_REQUIRED && shouldResolve){
                             // Getting credential needs to show some UI, start resolution
-                            Log.w(TAG, "start resolution");
                             resolveResult(status, RC_CREDENTIALS_READ);
                         }
                     }
@@ -237,7 +258,6 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode, resultCode, data);
-        Log.d(TAG, "onActivityResult:" + requestCode + ":" + requestCode + ":" + data);
 
         if (requestCode == RC_SIGN_IN) {
             GoogleSignInResult gsr = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
@@ -261,7 +281,6 @@ public class MainActivity extends AppCompatActivity implements
     private void handleCredential(Credential credential){
         mCredential = credential;
 
-        Log.d(TAG, "handleCredential:" + credential.getAccountType() + ":" + credential.getId());
         if(IdentityProviders.GOOGLE.equals(credential.getAccountType())){
             // Google account, rebuild GoogleApiClient to set account name and then try
         } else {
@@ -275,7 +294,6 @@ public class MainActivity extends AppCompatActivity implements
 
 
     private void saveCredentialIfConnected(Credential credential){
-        Log.d(TAG, "start saveCredentialIfConnected.");
         if (credential == null){
             Log.i("INFO", "No credential, return.");
             return;
@@ -283,19 +301,14 @@ public class MainActivity extends AppCompatActivity implements
 
         // Save Credential if the GoogleApiClient is connected, otherwise
         // the Credential is cached and will be saved when onConnected is next called.
-
         mCredentialToSave = credential;
         if(mGoogleApiClient.isConnected()){
-            Log.d(TAG, "start to save credential:" + mCredentialToSave);
             Auth.CredentialsApi.save(mGoogleApiClient, mCredentialToSave).setResultCallback(
                     new ResultCallback<Status>() {
                         @Override
                         public void onResult(@NonNull Status status) {
-                            if(status.isSuccess()){
-                                Log.d(TAG, "SAVE: OK");
-                            } else {
+                            if(!status.isSuccess()){
                                 if(status.hasResolution()){
-                                    Log.d(TAG, "has resolution.");
                                     // Prompt the user if the credential is new.
                                     resolveResult(status, RC_CREDENTIALS_SAVE);
                                 }else {
@@ -326,7 +339,6 @@ public class MainActivity extends AppCompatActivity implements
     private void resolveResult(Status status, int requestCode) {
         if (!mIsResolving) {
             try {
-                Log.d(TAG, "resolveResult:" + requestCode);
                 status.startResolutionForResult(MainActivity.this, requestCode);
                 mIsResolving = true;
             } catch (IntentSender.SendIntentException e) {
@@ -364,7 +376,6 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onClick(View view) {
         if (SystemClock.elapsedRealtime() - mLastClickTime < 1000){
-            Log.e("DEBUG", "multiple click.");
             return;
         }
         mLastClickTime = SystemClock.elapsedRealtime();
@@ -380,7 +391,6 @@ public class MainActivity extends AppCompatActivity implements
                 myTask.execute(username.getText().toString(), password.getText().toString());
                 break;
             case R.id.btnBrowseLocal:
-                Log.i("MainActivity", "will start local browsing.");
                 // Check if there are local data.
                 if (hasOfflineData()){
                     Intent intent = new Intent(this, PublicationActivity.class);
@@ -392,14 +402,13 @@ public class MainActivity extends AppCompatActivity implements
                 }
                 break;
         }
-
     }
 
 
     private boolean hasOfflineData(){
-        DBHandler db = new DBHandler(this);
+        DBHandler db = DBHandler.getInstance(this);
         SQLiteDatabase stpDb = db.getReadableDatabase();
-        List<Publication> pubs = db.getAllPublications(stpDb);
+        List<TableData> pubs = db.getAllPublications(stpDb);
 
         if (pubs.size() > 0)
             return true;
@@ -437,7 +446,6 @@ public class MainActivity extends AppCompatActivity implements
                 Intent intent = new Intent(context, PublicationActivity.class);
                 intent.putExtra(EXTRA_MESSAGE, String.valueOf(userid));
 
-                Log.i("DEBUG", "to save Credential...");
                 // Save Credential for next login
                 String user = username.getText().toString();
                 String pwd = password.getText().toString();
@@ -466,7 +474,7 @@ public class MainActivity extends AppCompatActivity implements
 
             try {
                 URL url = new URL(urlString);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                HttpURLConnection connection =(HttpURLConnection) url.openConnection();
 
                 try {
                     connection.setDoOutput(true);
@@ -476,9 +484,8 @@ public class MainActivity extends AppCompatActivity implements
                     connection.setRequestProperty("Accept", "application/json");
                     connection.setRequestMethod("POST");
 
-                    //String json = "{\"email\":\"rafyz@stpub.com\",\"password\":\"slcye2yd\"}";
                     String json = "{\"email\":\"" + user +"\",\"password\":\"" + pwd + "\"}";
-                    Log.i("login", "email = " + user + ", password = " + pwd);
+
                     OutputStream os = connection.getOutputStream();
                     os.write(json.getBytes("UTF-8"));
                     os.close();
@@ -500,12 +507,13 @@ public class MainActivity extends AppCompatActivity implements
                         return new AsyncTaskResult<String>(new Exception("Bad email or password.") );
                     }
                     else {
+                        Log.e("Error", "Call POST failed: " + connection.getResponseMessage());
                         return new AsyncTaskResult<String>(new Exception(connection.getResponseMessage()) );
                     }
-
                 }
                 catch (Exception e){
                     Log.e("ManiActivity", "ee" + e.getMessage());
+                    e.printStackTrace();
                     return new AsyncTaskResult<String> (e);
                 }
                 finally {
@@ -513,6 +521,7 @@ public class MainActivity extends AppCompatActivity implements
                 }
             }
             catch (IOException e) {
+                Log.e("ManiActivity", "dee" + e.getMessage());
                 e.printStackTrace();
                 this.exception = e;
                 return new AsyncTaskResult<String> (e);
@@ -520,7 +529,7 @@ public class MainActivity extends AppCompatActivity implements
         }
 
 
-        public class AsyncTaskResult<String> {
+        protected class AsyncTaskResult<String> {
             private String result;
             private Exception error;
 

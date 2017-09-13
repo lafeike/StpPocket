@@ -1,6 +1,7 @@
 package com.stpub.stppocket.data;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.Log;
@@ -37,13 +38,25 @@ public class MyTableDataAdapter extends LongPressAwareTableDataAdapter<TableData
         renderedView = renderString(tableData.getTitle(), false);
         rowClicked = getRowClicked();
 
-        Log.i("Adapter", "row clicked = " + rowClicked);
+//        Log.i("Adapter", "row clicked = " + rowClicked);
         if(rowIndex != 0 && rowIndex == rowClicked){
             renderedView.setBackgroundColor(Color.YELLOW);
         }
 
         return renderedView;
     }
+
+
+    private boolean isPublicationInLocal(String acronym){
+        DBHandler db = DBHandler.getInstance(getContext());
+        SQLiteDatabase stpDb = db.getReadableDatabase();
+        if(db.getPublication(stpDb, acronym) != null){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 
 
     @Override
@@ -88,7 +101,7 @@ public class MyTableDataAdapter extends LongPressAwareTableDataAdapter<TableData
 
     public void setRowClicked(final int rowIndex){
         this.rowClicked = rowIndex;
-        Log.i("Adapter", "clicked row: " + rowIndex);
+        Log.i("Adapter", "set row clicked: " + rowIndex);
     }
 
 

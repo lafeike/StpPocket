@@ -7,10 +7,11 @@ package com.stpub.stppocket.data;
 public class TableData {
 
     private  String title;
-    private int key;
+    private String key;
     private String parentKey;
+    private int pid;
 
-    public TableData(final String title, final int key){
+    public TableData(final String title, final String key){
         this.title = title;
         this.key = key;
     }
@@ -20,16 +21,21 @@ public class TableData {
     }
 
 
-    public int getKey(){
+    public String getKey(){
         return key;
     }
+
+    public void setPid(final int pid) { this.pid = pid;};
+
+    public int getPid(){return pid;}
+
 
     public void setTitle(final String title){
         this.title = title;
     }
 
 
-    public void setKey(final int key) {
+    public void setKey(final String key) {
         this.key = key;
     }
 

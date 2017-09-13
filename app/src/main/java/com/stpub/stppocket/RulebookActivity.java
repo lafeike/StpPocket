@@ -20,7 +20,6 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 
-import com.stpub.stppocket.data.Publication;
 import com.stpub.stppocket.data.States;
 import com.stpub.stppocket.data.TableData;
 import com.stpub.stppocket.data.Topic;
@@ -103,7 +102,6 @@ public class RulebookActivity extends AppCompatActivity {
         popupWindow.setTouchInterceptor(new View.OnTouchListener() {
 
             public boolean onTouch(View v, MotionEvent event) {
-                Log.i("topic", "touched 0.");
 
                 if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
                     popupWindow.dismiss();
@@ -125,8 +123,6 @@ public class RulebookActivity extends AppCompatActivity {
 
         listInfoType.setAdapter(adapter);
         listInfoType.setSelection(selectedState);
-        //layoutInfoType.setSelected(true);
-        Log.i("Section", "set selection: " + selectedState);
 
         listInfoType.setOnItemClickListener(new AdapterView.OnItemClickListener(){
             @Override

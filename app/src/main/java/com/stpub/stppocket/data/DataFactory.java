@@ -21,17 +21,17 @@ import java.util.Map;
  */
 
 public final class DataFactory {
-    private static String tableType; // We will
+    private String tableType; // We will
 
-    public DataFactory(String tableType){
+    DataFactory(String tableType){
         this.tableType = tableType;
     }
 
 
-    public static String getTableType() {
+    private String getTableType() {
         return tableType;
     }
-
+/*
     public static List<Publication> createPublicationList(String jsonData) throws JSONException{
         final JSONArray json = new JSONArray(jsonData);
         final int n = json.length();
@@ -46,13 +46,13 @@ public final class DataFactory {
         return  pubs;
     }
 
-
-    public static Publication extractPublication(String jsonData) throws  JSONException {
+*/
+     TableData extractPublication(String jsonData) throws  JSONException {
         final JSONObject jsonObject = new JSONObject(jsonData);
         final JSONObject pub = jsonObject.getJSONObject("pb");
 
         //final JSONObject pub = jsonArray.getJSONObject(0);
-        Publication p = new Publication(pub.getString("acronym"), pub.getString("title"));
+        TableData p = new TableData(pub.getString("title"), pub.getString("acronym") );
         p.setPid(pub.getInt("publicationID"));
 
         return p;
@@ -60,7 +60,7 @@ public final class DataFactory {
 
     // Extract topic from JSON and save the state list.
     // to parse the response from: /api/Topics?acronym=OF&userid=8191
-    public  List<TableData> extractTopic(String jsonData) throws JSONException {
+    List<TableData> extractTopic(String jsonData) throws JSONException {
         final JSONObject jsonObject = new JSONObject(jsonData);
         JSONArray jsonArray = jsonObject.getJSONArray("tp");
 
@@ -68,7 +68,7 @@ public final class DataFactory {
     }
 
 
-    public ArrayList<String> extractStates(String jsonData) throws JSONException {
+    ArrayList<String> extractStates(String jsonData) throws JSONException {
         final JSONObject jsonObject = new JSONObject(jsonData);
         ArrayList<String> state = new ArrayList<>();
 
@@ -99,11 +99,10 @@ public final class DataFactory {
         String columnShow = getColumnName(urlType).get("showColumn");
         String columnHide = getColumnName(urlType).get("hideColumn");
         String parentKeyName = getColumnName(urlType).get("parentKeyName");
-        Log.i("DataFactory", "columnShow: " + columnShow);
 
         for (int i=0; i<n; i++){
             final JSONObject j = jsonArray.getJSONObject(i);
-            TableData t = new TableData(j.getString(columnShow), j.getInt(columnHide));
+            TableData t = new TableData(j.getString(columnShow), j.getString(columnHide));
             t.setParentKey(j.getString(parentKeyName));
             tableData.add(t);
         }
@@ -113,10 +112,10 @@ public final class DataFactory {
     }
 
 
-    public static List<TableData> extractTable(String jsonData, String urlType) throws JSONException {
+    List<TableData> extractTable(String jsonData, String urlType) throws JSONException {
         final JSONObject jsonObject = new JSONObject(jsonData);
         JSONArray jsonArray;
-        Log.i("DataFactory", "urlType = " + urlType);
+
         switch (urlType){
             case "topic":
                 jsonArray = jsonObject.getJSONArray("tp");
@@ -138,18 +137,17 @@ public final class DataFactory {
     }
 
 
-    public static List<Paragraph> extractParagraph(String jsonData) throws JSONException {
+    List<Paragraph> extractParagraph(String jsonData) throws JSONException {
         final JSONObject jsonObject = new JSONObject(jsonData);
         final List<Paragraph> tableData = new ArrayList<>();
         JSONObject json;
 
         JSONArray jsonArray = jsonObject.getJSONArray("pg");
         final int n = jsonArray.length();
-        Log.i("DataFactory", "get json object pg: " + n);
 
         for (int i=0; i<n; i++){
             final JSONObject j = jsonArray.getJSONObject(i);
-            Paragraph p = new Paragraph(j.getString("citation"), j.getInt("paraKey"));
+            Paragraph p = new Paragraph(j.getString("citation"), j.getString("paraKey"));
             p.setSectionKey(j.getInt("sectionKey"));
             p.setParaNum(j.getString("paraNum"));
             p.setGuideNote(j.getString("guideNote"));
@@ -161,17 +159,17 @@ public final class DataFactory {
     }
 
 
-    public static List<TableData> createTableList(String jsonData) throws JSONException {
+    List<TableData> createTableList(String jsonData) throws JSONException {
         final JSONArray jsonArray = new JSONArray(jsonData);
         final int n = jsonArray.length();
         final List<TableData> tableData = new ArrayList<>();
 
-        String columnShow = getColumnName().get("showColumn");
-        String columnHide = getColumnName().get("hideColumn");
+        String columnShow = getColumnName(getTableType()).get("showColumn");
+        String columnHide = getColumnName(getTableType()).get("hideColumn");
 
         for (int i=0; i<n; i++){
             final JSONObject jsonObject = jsonArray.getJSONObject(i);
-            TableData t = new TableData(jsonObject.getString(columnShow), jsonObject.getInt(columnHide));
+            TableData t = new TableData(jsonObject.getString(columnShow), jsonObject.getString(columnHide));
             tableData.add(t);
         }
 
@@ -179,7 +177,7 @@ public final class DataFactory {
     }
 
 
-    public static List<TableData> createParaList(String jsonData) throws  JSONException {
+    List<TableData> createParaList(String jsonData) throws  JSONException {
         final JSONArray jsonArray = new JSONArray(jsonData);
         final int n = jsonArray.length();
         final List<TableData> tableData = new ArrayList<>();
@@ -198,13 +196,13 @@ public final class DataFactory {
         // Add a placeholder in the first row. The first row in the table view will display
         // the details of the selected row, so we put an extra row in the array
         // to render the table view correctly.
-        Paragraph paragraph = new Paragraph("Mock", 0);
+        Paragraph paragraph = new Paragraph("Mock", "0");
         tableData.add(paragraph);
 
         for (int i = 0; i < n; i++){
             final JSONObject jsonObject = jsonArray.getJSONObject(i);
 
-            paragraph = new Paragraph(jsonObject.getString("citation"), jsonObject.getInt("paraKey"));
+            paragraph = new Paragraph(jsonObject.getString("citation"), jsonObject.getString("paraKey"));
             paragraph.setSectionKey(jsonObject.getInt("sectionKey"));
             paragraph.setGuideNote(jsonObject.getString("guideNote"));
             paragraph.setParaNum(jsonObject.getString("paraNum"));
@@ -222,7 +220,7 @@ public final class DataFactory {
     }
 
 
-    public static Map<String, String> getColumnName(String urlType){
+    private static Map<String, String> getColumnName(String urlType){
         Map<String, String> map = new HashMap<String, String>();
         switch (urlType){
             case "publication":
@@ -257,10 +255,10 @@ public final class DataFactory {
         return map;
     }
 
-
-    public static Map<String, String> getColumnName(){
+/*
+    private static Map<String, String> getColumnName(String tableType){
         Map<String, String> map = new HashMap<String, String>();
-        switch (getTableType()){
+        switch (tableType){
             case "publication":
                 map.put("showColumn", "title");
                 map.put("hideColumn", "acronym");
@@ -286,5 +284,5 @@ public final class DataFactory {
         }
 
         return map;
-    }
+    }*/
 }

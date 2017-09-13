@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.stpub.stppocket.R;
 import com.stpub.stppocket.helper.Helper;
 
 import java.util.ArrayList;
@@ -63,12 +64,12 @@ public class ParaTableDataAdapter extends MyTableDataAdapter {
             if (Arrays.asList(sdType).contains(tableData.getQuestion())){
                 renderView = renderString(state + "-" + tableData.getParaNum() + ": " + tableData.getTitle()
                     + "(" + tableData.getQuestion() + ")", true);
-                //renderView.setAlpha(0.6f);
-                //renderView.getRootView().text
             } else {
                 renderView = renderString(tableData.getParaNum() + ": " + tableData.getTitle(), false);
             }
-
+            if(rowIndex == rowClicked){
+                renderView.setBackgroundColor(getResources().getColor(R.color.color_orange));
+            }
         }
 
         return renderView;

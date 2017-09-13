@@ -8,8 +8,6 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
-import com.stpub.stppocket.data.Publication;
-
 import de.codecrafters.tableview.SortableTableView;
 import de.codecrafters.tableview.listeners.TableDataClickListener;
 import de.codecrafters.tableview.model.TableColumnDpWidthModel;
@@ -66,7 +64,6 @@ public class StpTableView extends SortableTableView {
             Activity activity = (Activity) context;
             Intent intent = activity.getIntent();
             headerTxt = intent.getStringExtra("TABLE_HEADER");
-            Log.i(TAG, "activity is: " + activityName + ", get table header: " + headerTxt);
         }
 
         return headerTxt;

@@ -7,18 +7,18 @@ import android.util.Log;
  */
 
 public class Paragraph extends TableData {
-    private int key;
+    private String key;
     private int sectionKey;
     private String paraNum;
     private String question;
     private String guideNote;
     private String title;
 
-    public Paragraph(final String title, final int key){
+    public Paragraph(final String title, final String key){
         super(title, key);
     }
 
-    public int getParaKey() {
+    public String getParaKey() {
         return key;
     }
 

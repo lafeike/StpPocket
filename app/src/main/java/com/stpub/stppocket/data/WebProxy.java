@@ -4,11 +4,14 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.content.Intent;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -41,7 +44,7 @@ public class WebProxy extends AsyncTask<String, String, WebProxy.AsyncTaskResult
     public Context context;
 
     private String urlType;
-    private String tableHeaderText;
+    //private String tableHeaderText;
 
     ProgressBar progressBar;
 
@@ -109,7 +112,7 @@ public class WebProxy extends AsyncTask<String, String, WebProxy.AsyncTaskResult
 
     private String buildURL(String urlType, String value1, String value2){
         String result = null;
-        tableHeaderText = value2;
+        //tableHeaderText = value2;
         switch (urlType){
             case "publication":
                 result = "Publications?userId=" + value1;
@@ -299,6 +302,7 @@ public class WebProxy extends AsyncTask<String, String, WebProxy.AsyncTaskResult
                     case "paragraph":
                         tableDataAdapter = new ParaTableDataAdapter(context, dataFactory.createParaList(jsonData), myTableView);
                         myTableView.setDataAdapter(tableDataAdapter);
+
                         break;
                     case "topic":
                         tableDataAdapter = new MyTableDataAdapter(context, dataFactory.extractTopic(jsonData), myTableView);

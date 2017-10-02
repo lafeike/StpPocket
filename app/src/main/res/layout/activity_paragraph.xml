@@ -7,6 +7,19 @@
     tools:context="com.stpub.stppocket.ParagraphActivity">
 
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="40dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="8dp"
+        android:src="@drawable/floating"
+        app:backgroundTint="@color/color_orange"
+        app:fabSize="mini"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <android.support.v7.widget.Toolbar
         android:id="@+id/my_toolbar"
         layout="@layout/app_bar"
@@ -29,25 +42,12 @@
             android:textColor="@android:color/white" />
     </android.support.v7.widget.Toolbar>
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab"
-        android:layout_width="40dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginTop="8dp"
-        android:src="@drawable/floating"
-        app:backgroundTint="@color/color_orange"
-        app:fabSize="mini"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
 
     <com.stpub.stppocket.StpTableView xmlns:table="http://schemas.android.com/apk/res-auto"
         android:id="@+id/tableView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
+        android:padding="0dp"
         android:fontFamily="@font/myriad_pro_regular"
         table:layout_constraintBottom_toBottomOf="parent"
         table:layout_constraintLeft_toLeftOf="parent"

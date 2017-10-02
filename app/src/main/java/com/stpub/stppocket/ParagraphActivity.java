@@ -21,6 +21,7 @@ import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 
 import com.stpub.stppocket.data.DBHandler;
 import com.stpub.stppocket.data.MyTableDataAdapter;

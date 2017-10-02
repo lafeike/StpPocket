@@ -1,10 +1,9 @@
 package com.stpub.stppocket.data;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 
 import com.stpub.stppocket.R;
 import com.stpub.stppocket.helper.Helper;
@@ -53,10 +52,10 @@ public class ParaTableDataAdapter extends MyTableDataAdapter {
             }
 
             if (Arrays.asList(sdType).contains(tableData.getQuestion())){
-                renderView = renderString(state + "\n" + tableData.getGuideNote(), true);
+                renderView = renderHtml("<b>" + state + "</b><br>" + tableData.getGuideNote());
                 //renderView.setAlpha(0.6f);
             } else {
-                renderView = renderString(tableData.getParaNum() + " " + tableData.getQuestion() + "\n\n" + tableData.getGuideNote(), false);
+                renderView = renderHtml(tableData.getParaNum() + " " + tableData.getQuestion() + "<br><br>" + tableData.getGuideNote());
             }
         } else {
             tableData = (Paragraph) getRowData(rowIndex );
@@ -74,4 +73,15 @@ public class ParaTableDataAdapter extends MyTableDataAdapter {
 
         return renderView;
     }
+
+    // if it is state difference, display it it in different color.
+    public View renderHtml(final String value) {
+        final WebView textView = new WebView(getContext());
+        textView.getSettings().setJavaScriptEnabled(true);
+        textView.loadData(value, "text/html", null);
+
+        return textView;
+    }
+
+
 }
